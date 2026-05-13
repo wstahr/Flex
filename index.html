@@ -3,154 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Freedom — Invest in Your Future</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<title>Flex — Invest in Your Future</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@700;900&display=swap" rel="stylesheet">
 <style>
-:root{--lime:#C8F135;--coral:#FF5C3A;--sky:#3ABCFF;--purple:#9B5DE5;--cream:#FFF8F0;--dark:#0D0D0D;--mid:#1A1A1A;--card:#242424;--border:#333;--text:#E8E8E8;--muted:#888;--green:#00E676;--red:#FF4B4B;--gold:#FFD60A;}
+:root{
+/* Cash App-inspired: pure black + Cash Green */
+--cg:#00D64F;        /* Cash Green — primary accent */
+--cg2:#00FF5E;       /* Cash Green lighter */
+--black:#000000;
+--black2:#0D0D0D;    /* slightly lifted black for cards */
+--black3:#181818;    /* card surface */
+--black4:#222222;    /* borders / dividers */
+--white:#FFFFFF;
+--off:#F5F5F5;
+--grey1:#888888;
+--grey2:#555555;
+--red:#FF3B30;
+--blue:#007AFF;
+/* Keep some functional vars for existing components */
+--lime:#00D64F;--coral:#FF3B30;--sky:#007AFF;--purple:#00D64F;
+--dark:#000;--mid:#0D0D0D;--card:#181818;--border:#222;
+--text:#fff;--muted:#888;--green:#00D64F;--gold:#FFD60A;
+--lbg:#000;--lcard:#181818;--lborder:#222;--ltext:#fff;--lmuted:#888;
+--f1:'Inter',sans-serif;--f2:'Unbounded',sans-serif;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden;}
-h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+body{font-family:var(--f1);background:#f7f7f5;color:#111;min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,h4{font-family:var(--f2);}
 .page{display:none;}.page.active{display:block;}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,13,13,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;}
-.nav-logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--lime),var(--sky));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(247,247,245,0.95);backdrop-filter:blur(20px);border-bottom:1px solid #e5e5e0;padding:0 2.5rem;height:68px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:var(--f2);font-size:1.3rem;font-weight:900;color:#0a0a0a;cursor:pointer;display:flex;align-items:center;gap:0.6rem;letter-spacing:-0.03em;}
+.nav-logo .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--cg);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#000;}
 .nav-links{display:flex;gap:0.25rem;align-items:center;}
-.nav-btn{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.85rem;padding:0.5rem 1rem;border-radius:8px;cursor:pointer;transition:all 0.2s;}
-.nav-btn:hover{color:var(--text);background:var(--card);}
-.nav-cta{background:var(--lime);color:var(--dark);border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;padding:0.6rem 1.25rem;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-left:0.5rem;}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,241,53,0.3);}
-.dash-layout{display:flex;padding-top:64px;min-height:100vh;}
-.sidebar{width:220px;min-height:calc(100vh - 64px);background:var(--mid);border-right:1px solid var(--border);padding:1.5rem 1rem;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto;flex-shrink:0;}
+.nav-btn{background:none;border:none;color:#666;font-family:var(--f1);font-size:0.88rem;padding:0.5rem 1rem;border-radius:8px;cursor:pointer;transition:all 0.2s;font-weight:500;}
+.nav-btn:hover{color:#111;background:rgba(0,0,0,0.05);}
+.nav-cta{background:#0a0a0a;color:#fff;border:none;font-family:var(--f1);font-weight:700;font-size:0.88rem;padding:0.6rem 1.5rem;border-radius:100px;cursor:pointer;transition:all 0.2s;margin-left:0.5rem;letter-spacing:-0.01em;}
+.nav-cta:hover{background:#222;transform:scale(1.02);}
+
+/* DASHBOARD LAYOUT */
+.dash-layout{display:flex;padding-top:68px;min-height:100vh;}
+.sidebar{width:230px;min-height:calc(100vh - 68px);background:#fff;border-right:1px solid #e8e8e4;padding:1.5rem 1rem;position:sticky;top:68px;height:calc(100vh - 68px);overflow-y:auto;flex-shrink:0;}
 .sb-section{margin-bottom:2rem;}
-.sb-label{font-size:0.7rem;font-weight:600;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:0.5rem;padding:0 0.5rem;}
-.sb-item{display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--muted);font-size:0.9rem;margin-bottom:0.2rem;}
-.sb-item:hover{background:var(--card);color:var(--text);}
-.sb-item.active{background:rgba(200,241,53,0.1);color:var(--lime);}
-.main{flex:1;padding:2rem;overflow-y:auto;}
-.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.4rem;border-radius:10px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;}
-.btn-lime{background:var(--lime);color:var(--dark);}
-.btn-lime:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(200,241,53,0.35);}
-.btn-coral{background:var(--coral);color:white;}
-.btn-coral:hover{transform:translateY(-2px);}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
-.btn-outline:hover{border-color:var(--lime);color:var(--lime);}
-.btn-sky{background:var(--sky);color:var(--dark);}
-.btn-sm{padding:0.35rem 0.85rem;font-size:0.78rem;}
+.sb-label{font-size:0.68rem;font-weight:700;letter-spacing:0.12em;color:#bbb;text-transform:uppercase;margin-bottom:0.6rem;padding:0 0.5rem;}
+.sb-item{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;border-radius:12px;cursor:pointer;transition:all 0.15s;color:#999;font-size:0.9rem;margin-bottom:0.15rem;font-weight:500;}
+.sb-item:hover{background:#f2f2ef;color:#111;}
+.sb-item.active{background:#f2f2ef;color:#0a0a0a;font-weight:700;}
+.sb-item.active span:first-child{color:var(--cg);}
+.main{flex:1;padding:2.5rem;overflow-y:auto;background:#f7f7f5;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.75rem 1.5rem;border-radius:100px;border:none;font-family:var(--f1);font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;}
+.btn-lime{background:var(--cg);color:#000;}
+.btn-lime:hover{background:var(--cg2);transform:scale(1.02);}
+.btn-coral{background:#FF3B30;color:#fff;}
+.btn-coral:hover{filter:brightness(1.1);}
+.btn-outline{background:#fff;color:#111;border:1px solid #ddd;}
+.btn-outline:hover{border-color:#111;background:#f2f2ef;}
+.btn-sky{background:var(--cg);color:#000;}
+.btn-sm{padding:0.4rem 1rem;font-size:0.8rem;}
 .btn-full{width:100%;justify-content:center;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;}
+
+/* CARDS */
+.card{background:#fff;border:1px solid #e5e5e0;border-radius:20px;padding:1.5rem;box-shadow:0 1px 12px rgba(0,0,0,0.05);}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
-.api-box{background:#111;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:0.75rem;}
-.api-head{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:#1a1a1a;border-bottom:1px solid var(--border);}
-.api-method{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;padding:0.18rem 0.55rem;border-radius:4px;}
-.m-get{background:rgba(0,230,118,0.15);color:var(--green);}
-.m-post{background:rgba(58,188,255,0.15);color:var(--sky);}
-.m-delete{background:rgba(255,75,75,0.15);color:var(--red);}
-.m-calc{background:rgba(155,93,229,0.15);color:var(--purple);}
-.api-ep{font-family:monospace;font-size:0.82rem;color:var(--text);margin-left:0.65rem;flex:1;}
+
+/* API BOXES */
+.api-box{background:#fafaf8;border:1px solid #e5e5e0;border-radius:16px;overflow:hidden;margin-top:1rem;}
+.api-head{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;background:#f2f2ef;border-bottom:1px solid #e5e5e0;}
+.api-method{font-family:var(--f1);font-size:0.7rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:6px;}
+.m-get{background:rgba(0,214,79,0.15);color:var(--cg);}
+.m-post{background:rgba(0,122,255,0.15);color:#4DA3FF;}
+.m-delete{background:rgba(255,59,48,0.15);color:#FF3B30;}
+.m-calc{background:rgba(255,214,10,0.15);color:#FFD60A;}
+.api-ep{font-family:monospace;font-size:0.82rem;color:#666;margin-left:0.65rem;flex:1;}
 .api-body{padding:1rem;}
-.api-out{background:#0a0a0a;border-radius:8px;padding:1rem;font-family:monospace;font-size:0.78rem;color:#7dd87d;max-height:260px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;min-height:50px;}
-.api-out.err{color:var(--red);}
-.api-lbl{font-size:0.78rem;color:var(--muted);margin-bottom:0.35rem;}
-.ai{background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.85rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;}
-.ai:focus{outline:none;border-color:var(--lime);}
-.ai::placeholder{color:var(--muted);}
+.api-out{background:#000;border-radius:10px;padding:1rem;font-family:monospace;font-size:0.78rem;color:var(--cg);max-height:260px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;min-height:50px;border:1px solid #1a1a1a;}
+.api-out.err{color:#FF3B30;}
+.api-lbl{font-size:0.78rem;color:#888;margin-bottom:0.35rem;font-weight:600;}
+.ai{background:#fff;border:1px solid #ddd;border-radius:10px;padding:0.65rem 0.9rem;color:#111;font-family:var(--f1);font-size:0.85rem;}
+.ai:focus{outline:none;border-color:var(--cg);}
+.ai::placeholder{color:#bbb;}
 .ai-full{width:100%;}
 select.ai{appearance:none;cursor:pointer;}
 .irow{display:flex;gap:0.5rem;margin-bottom:0.65rem;align-items:flex-end;}
-.stat-c{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;}
-.s-lbl{font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;}
-.s-val{font-family:'Syne',sans-serif;font-size:1.75rem;font-weight:800;}
-.s-chg{font-size:0.78rem;margin-top:0.2rem;}
-.up{color:var(--green);}.down{color:var(--red);}
+
+/* STAT CARDS */
+.stat-c{background:#fff;border:1px solid #e5e5e0;border-radius:20px;padding:1.5rem;box-shadow:0 1px 12px rgba(0,0,0,0.04);}
+.s-lbl{font-size:0.75rem;color:#aaa;margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+.s-val{font-family:var(--f2);font-size:2rem;font-weight:900;color:#0a0a0a;letter-spacing:-0.02em;}
+.s-chg{font-size:0.8rem;margin-top:0.35rem;}
+.up{color:var(--cg);font-weight:600;}.down{color:#FF3B30;font-weight:600;}
+
+/* TABLES */
 .tbl-w{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
-th{text-align:left;padding:0.7rem 1rem;font-size:0.72rem;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:0.05em;text-transform:uppercase;}
-td{padding:0.9rem 1rem;border-bottom:1px solid #1f1f1f;font-size:0.88rem;}
+th{text-align:left;padding:0.75rem 1rem;font-size:0.7rem;color:#aaa;font-weight:700;border-bottom:1px solid #eee;letter-spacing:0.08em;text-transform:uppercase;}
+td{padding:1rem;border-bottom:1px solid #f0f0ee;font-size:0.88rem;color:#333;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,0.02);}
-.tkr{font-family:'Syne',sans-serif;font-weight:700;color:var(--lime);}
-.tag{display:inline-block;padding:0.18rem 0.6rem;border-radius:20px;font-size:0.73rem;font-weight:600;}
-.t-green{background:rgba(0,230,118,0.1);color:var(--green);}
-.t-red{background:rgba(255,75,75,0.1);color:var(--red);}
-.t-blue{background:rgba(58,188,255,0.1);color:var(--sky);}
-.t-purple{background:rgba(155,93,229,0.1);color:var(--purple);}
-.t-gold{background:rgba(255,214,10,0.1);color:var(--gold);}
-.t-grey{background:rgba(136,136,136,0.1);color:var(--muted);}
+tr:hover td{background:#fafaf8;}
+.tkr{font-family:var(--f2);font-weight:900;color:var(--cg);font-size:0.95rem;}
+
+/* TAGS */
+.tag{display:inline-block;padding:0.2rem 0.65rem;border-radius:100px;font-size:0.72rem;font-weight:700;}
+.t-green{background:rgba(0,214,79,0.12);color:var(--cg);}
+.t-red{background:rgba(255,59,48,0.12);color:#FF3B30;}
+.t-blue{background:rgba(0,122,255,0.12);color:#4DA3FF;}
+.t-purple{background:rgba(255,214,10,0.12);color:#FFD60A;}
+.t-gold{background:rgba(255,214,10,0.12);color:#FFD60A;}
+.t-grey{background:#f2f2ef;color:#888;}
+
+/* PAGE HEADERS */
 .ph{margin-bottom:2rem;}
-.pt{font-size:1.75rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.35rem;}
-.ps{color:var(--muted);font-size:0.88rem;}
-.tg-group{display:flex;background:var(--mid);border-radius:8px;padding:3px;gap:2px;}
-.tg-btn{padding:0.35rem 0.9rem;border-radius:6px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
-.tg-btn.active{background:var(--card);color:var(--text);}
-.fi{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:0.85rem;}
-.fi-l{background:rgba(200,241,53,0.1);}
-.fi-c{background:rgba(255,92,58,0.1);}
-.fi-s{background:rgba(58,188,255,0.1);}
-.fi-p{background:rgba(155,93,229,0.1);}
-.notif{width:7px;height:7px;border-radius:50%;background:var(--coral);display:inline-block;margin-left:4px;vertical-align:middle;}
-.form-g{margin-bottom:1.15rem;}
-.f-lbl{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:0.38rem;}
-.f-in{width:100%;background:#1a1a1a;border:1px solid var(--border);border-radius:10px;padding:0.72rem 1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;transition:border-color 0.2s;}
-.f-in:focus{outline:none;border-color:var(--lime);}
-.f-in::placeholder{color:var(--muted);}
-.ticker-tape{overflow:hidden;background:var(--mid);border-bottom:1px solid var(--border);padding:0.38rem 0;white-space:nowrap;}
+.pt{font-size:1.8rem;font-weight:900;color:#0a0a0a;margin-bottom:0.35rem;letter-spacing:-0.03em;font-family:var(--f2);}
+.ps{color:#888;font-size:0.88rem;}
+
+/* TOGGLES */
+.tg-group{display:flex;background:#f2f2ef;border:1px solid #e5e5e0;border-radius:12px;padding:4px;gap:2px;}
+.tg-btn{padding:0.4rem 1rem;border-radius:9px;border:none;background:none;color:#888;cursor:pointer;font-size:0.78rem;font-family:var(--f1);transition:all 0.2s;font-weight:600;}
+.tg-btn.active{background:#fff;color:#111;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
+
+/* MISC */
+.fi{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;background:#1a1a1a;}
+.notif{width:7px;height:7px;border-radius:50%;background:var(--cg);display:inline-block;margin-left:4px;vertical-align:middle;}
+.form-g{margin-bottom:1.25rem;}
+.f-lbl{display:block;font-size:0.8rem;color:#888;margin-bottom:0.4rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.f-in{width:100%;background:#fff;border:1px solid #ddd;border-radius:12px;padding:0.8rem 1.1rem;color:#111;font-family:var(--f1);font-size:0.9rem;transition:border-color 0.2s;}
+.f-in:focus{outline:none;border-color:var(--cg);}
+.f-in::placeholder{color:#bbb;}
+
+/* TICKER */
+.ticker-tape{overflow:hidden;background:#0a0a0a;border-bottom:1px solid #111;padding:0.5rem 0;white-space:nowrap;}
 .ticker-inner{display:inline-block;animation:scroll 35s linear infinite;}
-.ticker-item{display:inline-block;margin:0 2rem;font-size:0.78rem;font-family:'Syne',sans-serif;}
+.ticker-item{display:inline-block;margin:0 2.5rem;font-size:0.78rem;font-family:var(--f1);font-weight:600;color:#444;}
+.ticker-item .up{color:var(--cg);font-weight:700;}
+.ticker-item .down{color:#FF3B30;font-weight:700;}
 @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 2rem 2rem;position:relative;overflow:hidden;}
-.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(200,241,53,0.08) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(58,188,255,0.06) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 20% 60%,rgba(155,93,229,0.06) 0%,transparent 60%);}
-.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.2);border-radius:20px;padding:0.38rem 1rem;font-size:0.78rem;color:var(--lime);margin-bottom:2rem;animation:fadeUp 0.6s ease both;}
-.hero-h{font-size:clamp(3rem,8vw,6rem);font-weight:800;line-height:0.95;margin-bottom:1.5rem;animation:fadeUp 0.6s 0.1s ease both;}
-.hero-sub{font-size:1.1rem;color:var(--muted);max-width:500px;line-height:1.7;margin-bottom:2.5rem;animation:fadeUp 0.6s 0.2s ease both;}
-.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.6s 0.3s ease both;}
-.hero-stats{display:flex;gap:2.5rem;margin-top:3.5rem;animation:fadeUp 0.6s 0.4s ease both;}
-.hs-val{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;color:var(--lime);}
-.hs-lbl{font-size:0.78rem;color:var(--muted);}
-.fc{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.7rem 0.95rem;font-size:0.78rem;animation:floatUp 6s ease-in-out infinite;}
-.fc1{top:18%;left:4%;animation-delay:0s;}
-.fc2{top:28%;right:4%;animation-delay:2s;}
-.fc3{bottom:22%;left:6%;animation-delay:4s;}
-.fc4{bottom:18%;right:6%;animation-delay:1s;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 2rem 5rem;position:relative;overflow:hidden;background:#f7f7f5;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,214,79,0.12) 0%,transparent 70%);}
+.hero-badge{display:inline-flex;align-items:center;gap:0.6rem;background:#fff;border:1px solid #e0e0da;border-radius:100px;padding:0.5rem 1.2rem;font-size:0.78rem;color:#666;margin-bottom:2.5rem;animation:fadeUp 0.5s ease both;font-weight:600;}
+.hero-badge .badge-dot{width:7px;height:7px;border-radius:50%;background:var(--cg);}
+.hero-h{font-size:clamp(3rem,9vw,7.5rem);font-weight:900;line-height:0.92;margin-bottom:1.75rem;animation:fadeUp 0.5s 0.1s ease both;color:#0a0a0a;letter-spacing:-0.04em;font-family:var(--f2);}
+.hero-sub{font-size:1.15rem;color:#555;max-width:480px;line-height:1.7;margin-bottom:3rem;animation:fadeUp 0.5s 0.2s ease both;font-weight:400;}
+.hero-ctas{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.5s 0.3s ease both;}
+.hero-stats{display:flex;gap:0;margin-top:5rem;animation:fadeUp 0.5s 0.4s ease both;background:#fff;border-radius:20px;border:1px solid #e5e5e0;box-shadow:0 2px 20px rgba(0,0,0,0.06);overflow:hidden;}
+.hs-item{padding:1.5rem 2.5rem;border-right:1px solid #e5e5e0;text-align:center;}
+.hs-item:last-child{border-right:none;}
+.hs-val{font-family:var(--f2);font-size:1.8rem;font-weight:900;color:#0a0a0a;letter-spacing:-0.03em;}
+.hs-lbl{font-size:0.72rem;color:#888;margin-top:0.2rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+
+/* FLOATING CARDS */
+.fc{position:absolute;background:#fff;border:1px solid #e5e5e0;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:0.9rem 1.1rem;font-size:0.78rem;animation:floatUp 6s ease-in-out infinite;color:#fff;}
+.fc1{top:18%;left:3%;animation-delay:0s;}
+.fc2{top:26%;right:3%;animation-delay:2s;}
+.fc3{bottom:22%;left:5%;animation-delay:4s;}
+.fc4{bottom:18%;right:5%;animation-delay:1s;}
 @keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
-.feat-section{padding:5rem 2rem;max-width:1100px;margin:0 auto;}
-.feat-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;transition:all 0.3s;}
-.feat-card:hover{border-color:var(--lime);transform:translateY(-4px);}
-.tip-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.75rem;transition:all 0.3s;position:relative;overflow:hidden;}
-.tip-card:hover{border-color:rgba(200,241,53,0.3);transform:translateY(-2px);}
-.tip-n{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;position:absolute;top:0.75rem;right:1.25rem;color:rgba(255,255,255,0.04);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+/* PHOTOS */
+.hero-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:5rem;max-width:1000px;width:100%;animation:fadeUp 0.6s 0.5s ease both;}
+.hero-photo{border-radius:24px;overflow:hidden;position:relative;aspect-ratio:3/4;}
+.hero-photo img{width:100%;height:100%;object-fit:cover;filter:brightness(0.85);}
+.photo-tag{position:absolute;bottom:14px;left:14px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,0.1);border-radius:100px;padding:0.35rem 0.9rem;font-size:0.72rem;font-weight:700;color:#111;display:flex;align-items:center;gap:0.4rem;}
+.photo-tag .pt-dot{width:6px;height:6px;border-radius:50%;background:var(--cg);}
+
+/* FEATURE SECTION */
+.feat-section{padding:7rem 2rem;max-width:1100px;margin:0 auto;background:#f7f7f5;}
+.feat-card{background:#fff;border:1px solid #e5e5e0;border-radius:24px;padding:2.25rem;transition:all 0.25s;box-shadow:0 1px 16px rgba(0,0,0,0.05);}
+.feat-card:hover{border-color:#0a0a0a;transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,0.1);}
+
+/* CARDS IN DASH */
+.tip-card{background:#fff;border:1px solid #e5e5e0;border-radius:20px;padding:1.75rem;transition:all 0.2s;position:relative;overflow:hidden;}
+.tip-card:hover{border-color:#0a0a0a;transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.08);}
+.tip-n{font-family:var(--f2);font-size:3rem;font-weight:900;position:absolute;top:0.75rem;right:1.25rem;color:rgba(0,0,0,0.04);}
 .order-tabs{display:flex;gap:0.5rem;margin-bottom:1.25rem;}
-.o-tab{flex:1;padding:0.7rem;text-align:center;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-weight:700;font-size:0.85rem;transition:all 0.2s;background:none;color:var(--muted);font-family:'Syne',sans-serif;}
-.o-tab.buy.active{background:rgba(0,230,118,0.1);border-color:var(--green);color:var(--green);}
-.o-tab.sell.active{background:rgba(255,75,75,0.1);border-color:var(--red);color:var(--red);}
+.o-tab{flex:1;padding:0.75rem;text-align:center;border-radius:12px;border:1px solid #e5e5e0;cursor:pointer;font-weight:700;font-size:0.85rem;transition:all 0.2s;background:#fff;color:#aaa;font-family:var(--f1);}
+.o-tab.buy.active{background:rgba(0,214,79,0.1);border-color:var(--cg);color:var(--cg);}
+.o-tab.sell.active{background:rgba(255,59,48,0.1);border-color:#FF3B30;color:#FF3B30;}
 .kyc-step{display:flex;gap:1rem;margin-bottom:1.5rem;}
-.kyc-n{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;}
-.kn-done{background:var(--green);color:var(--dark);}
-.kn-active{background:var(--lime);color:var(--dark);}
-.kn-pending{background:var(--card);border:1px solid var(--border);color:var(--muted);}
-.lesson-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem;margin-bottom:0.75rem;}
+.kyc-n{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--f1);font-weight:700;font-size:0.82rem;}
+.kn-done{background:var(--cg);color:#000;}
+.kn-active{background:#fff;color:#000;}
+.kn-pending{background:#f5f5f3;border:1px solid #ddd;color:#aaa;}
+.lesson-card{background:#fff;border:1px solid #e5e5e0;border-radius:16px;padding:1.4rem;margin-bottom:0.75rem;}
 .lesson-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
-.lesson-body{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.9rem;line-height:1.7;}
+.lesson-body{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid #eee;color:#555;font-size:0.9rem;line-height:1.7;}
 .lesson-body.open{display:block;}
-.learn-hero{background:linear-gradient(135deg,rgba(200,241,53,0.08),rgba(58,188,255,0.06));border:1px solid var(--border);border-radius:20px;padding:2.5rem;margin-bottom:2rem;}
-::-webkit-scrollbar{width:5px;height:5px;}
+.learn-hero{background:#f2f2ef;border:1px solid #e5e5e0;border-radius:20px;padding:2.5rem;margin-bottom:2rem;}
+::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-.progress{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:0.35rem;}
-.progress-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
-.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--lime),var(--sky));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;color:var(--dark);font-size:0.95rem;}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+.progress{height:4px;background:#e5e5e0;border-radius:2px;overflow:hidden;margin-top:0.35rem;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
+.avatar{width:38px;height:38px;border-radius:50%;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-family:var(--f1);font-weight:700;color:#fff;font-size:0.95rem;}
 .step-indicator{display:flex;gap:0.5rem;margin-bottom:2rem;}
-.step{flex:1;height:4px;border-radius:2px;background:var(--border);}
-.step.done{background:var(--green);}
-.step.active{background:var(--lime);}
-@media(max-width:768px){.sidebar{display:none;}.main{padding:1rem;}.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}.fc{display:none;}}
+.step{flex:1;height:3px;border-radius:2px;background:#e5e5e0;}
+.step.done{background:var(--cg);}
+.step.active{background:#fff;}
+@media(max-width:768px){.sidebar{display:none;}.main{padding:1.25rem;}.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}.fc{display:none;}}
 </style>
 </head>
 <body>
 
 <nav id="mainNav">
-  <div class="nav-logo" onclick="goLanding()">⚡ Freedom</div>
+  <div class="nav-logo" onclick="goLanding()"><div class="logo-mark" style="font-size:0.9rem;font-weight:900;color:#000;">F</div>Flex</div>
   <div id="navPublic" class="nav-links">
     <button class="nav-btn" onclick="goLanding()">Home</button>
     <button class="nav-btn" onclick="goLanding();setTimeout(()=>document.getElementById('feats').scrollIntoView({behavior:'smooth'}),100)">Features</button>
@@ -166,59 +228,152 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
 <!-- ============= LANDING ============= -->
 <div id="pg-landing" class="page active">
+
+  <!-- ── HERO ─────────────────────────────────────────────────── -->
   <div class="hero">
     <div class="hero-bg"></div>
+
+    <!-- Floating stock cards -->
     <div class="fc fc1">
-      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.25rem;">NVDA</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;">$875.20</div>
-      <div style="font-size:0.72rem;color:var(--green);">▲ +3.45%</div>
+      <div style="font-size:0.68rem;color:#888;margin-bottom:0.3rem;font-weight:600;">NVDA</div>
+      <div style="font-family:var(--f2);font-weight:700;font-size:1.05rem;color:#111;">$875.20</div>
+      <div style="font-size:0.72rem;color:var(--cg);font-weight:700;">▲ +3.45%</div>
     </div>
     <div class="fc fc2">
-      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.25rem;">Today's P&amp;L</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green);">+$284.30</div>
+      <div style="font-size:0.68rem;color:#888;margin-bottom:0.25rem;font-weight:600;">Today's P&amp;L</div>
+      <div style="font-family:var(--f2);font-weight:700;color:var(--cg);font-size:1.05rem;">+$284.30</div>
+      <div style="font-size:0.68rem;color:#888;margin-top:0.2rem;">Best day this week 🔥</div>
     </div>
     <div class="fc fc3">
-      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.25rem;">Portfolio Value</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;">$12,450</div>
-      <div class="progress" style="width:120px;margin-top:0.3rem;"><div class="progress-fill" style="width:62%;background:var(--lime);"></div></div>
+      <div style="font-size:0.68rem;color:#888;margin-bottom:0.25rem;font-weight:600;">Portfolio</div>
+      <div style="font-family:var(--f2);font-weight:700;font-size:1.05rem;">$12,450</div>
+      <div style="height:4px;background:#e5e5e0;border-radius:3px;margin-top:0.4rem;width:110px;overflow:hidden;"><div style="height:100%;width:62%;background:var(--cg);border-radius:3px;"></div></div>
+      <div style="font-size:0.65rem;color:#888;margin-top:0.2rem;">62% to goal</div>
     </div>
     <div class="fc fc4">
-      <div style="font-size:0.75rem;">🎯 FIRE Goal: $500k</div>
-      <div style="font-size:0.68rem;color:var(--muted);margin-top:0.2rem;">You're crushing it! Keep going</div>
+      <div style="font-size:0.72rem;font-weight:700;color:#fff;">🎯 FIRE Goal</div>
+      <div style="font-family:var(--f2);font-weight:700;font-size:1.1rem;color:var(--purple);">$500,000</div>
+      <div style="font-size:0.68rem;color:#555;margin-top:0.15rem;">You're on track! 🚀</div>
     </div>
-    <div style="position:relative;z-index:1;max-width:680px;">
-      <div class="hero-badge">⚡ Paper-trading powered by Alpaca Markets API</div>
-      <h1 class="hero-h">Build your<br><span style="color:var(--lime);">wealth.</span><br><span style="color:var(--coral);">Your rules.</span></h1>
-      <p class="hero-sub">The investing platform built for your generation. No suits, no jargon, no BS. Start with $1 and watch it grow. ✨</p>
-      <div class="hero-ctas">
-        <button class="btn btn-lime" style="font-size:1rem;padding:0.9rem 2rem;" onclick="goDash('portfolio')">🚀 Start Investing Free</button>
-        <button class="btn btn-outline" style="font-size:1rem;padding:0.9rem 2rem;" onclick="goDash('trading101')">📚 Learn the Basics</button>
+
+    <!-- Hero content -->
+    <div style="position:relative;z-index:1;max-width:720px;">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Paper-trading powered by Alpaca Markets
       </div>
+
+      <h1 class="hero-h">
+        Your money,<br>
+        <span style="background:linear-gradient(135deg,#7B2FFF,var(--sky));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">finally working</span><br>
+        for <em style="font-style:italic;color:var(--coral);">you.</em>
+      </h1>
+
+      <p class="hero-sub">No suits. No jargon. No BS. Flex is the investing platform built for your generation — start with $1 and actually understand where it goes.</p>
+
+      <div class="hero-ctas">
+        <button class="btn btn-lime" style="font-size:1rem;padding:0.95rem 2.2rem;border-radius:14px;letter-spacing:-0.01em;" onclick="goDash('portfolio')">
+          Get started free →
+        </button>
+        <button class="btn btn-outline" style="font-size:1rem;padding:0.95rem 2.2rem;border-radius:14px;" onclick="goDash('trading101')">
+          Learn first
+        </button>
+      </div>
+
+      <!-- Stats bar -->
       <div class="hero-stats">
-        <div><div class="hs-val">$0</div><div class="hs-lbl">Min. to start</div></div>
-        <div><div class="hs-val">0%</div><div class="hs-lbl">Commissions</div></div>
-        <div><div class="hs-val">24/5</div><div class="hs-lbl">Trading hours</div></div>
-        <div><div class="hs-val">FIRE</div><div class="hs-lbl">Ready tools</div></div>
+        <div class="hs-item"><div class="hs-val">$0</div><div class="hs-lbl">Min. to start</div></div>
+        <div class="hs-item"><div class="hs-val">0%</div><div class="hs-lbl">Commission</div></div>
+        <div class="hs-item"><div class="hs-val">24/5</div><div class="hs-lbl">Trading hours</div></div>
+        <div class="hs-item"><div class="hs-val">FIRE</div><div class="hs-lbl">Ready tools</div></div>
+      </div>
+    </div>
+
+    <!-- Photo grid — young adults -->
+    <div class="hero-photos" style="margin-top:5rem;max-width:1000px;width:100%;padding:0 1rem;">
+      <div class="hero-photo" style="grid-row:span 1;">
+        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=600&fit=crop&crop=faces" alt="Young adults laughing together" loading="lazy">
+        <div class="photo-tag"><span class="pt-dot"></span> Community</div>
+      </div>
+      <div class="hero-photo hero-photo-tall" style="grid-row:span 1;margin-top:2rem;">
+        <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=600&fit=crop&crop=faces" alt="Person celebrating at laptop" loading="lazy">
+        <div class="photo-tag"><span class="pt-dot" style="background:var(--sky);"></span> First trade ✓</div>
+      </div>
+      <div class="hero-photo" style="grid-row:span 1;">
+        <img src="https://images.unsplash.com/photo-1543269664-56d93c1b41a6?w=400&h=600&fit=crop&crop=faces" alt="Young woman checking phone smiling" loading="lazy">
+        <div class="photo-tag"><span class="pt-dot" style="background:var(--coral);"></span> Up 18% 📈</div>
       </div>
     </div>
   </div>
 
-  <div class="feat-section" id="feats">
-    <div style="text-align:center;margin-bottom:3rem;">
-      <div style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);font-weight:600;margin-bottom:0.75rem;">Everything you need</div>
-      <h2 style="font-size:2.4rem;font-weight:800;margin-bottom:0.75rem;">Investing, but make it <span style="color:var(--lime);">actually fun</span></h2>
-      <p style="color:var(--muted);max-width:460px;margin:0 auto;font-size:0.92rem;">Built on Delta's aesthetic, Kubera's breadth, Lunch Money's honesty, and Sharesight's precision.</p>
-    </div>
-    <div class="g2" style="gap:1.5rem;">
-      <div class="feat-card"><div class="fi fi-l">📊</div><h3 style="font-size:1.15rem;margin-bottom:0.5rem;">Real Portfolio Tracking</h3><p style="color:var(--muted);font-size:0.88rem;line-height:1.6;">Stocks, crypto, alt assets in one Delta-style view. See your true returns, not just the numbers your broker wants you to see.</p></div>
-      <div class="feat-card"><div class="fi fi-c">🔒</div><h3 style="font-size:1.15rem;margin-bottom:0.5rem;">Privacy First</h3><p style="color:var(--muted);font-size:0.88rem;line-height:1.6;">No ads, no data selling. Lunch Money vibes all day. We make money when you succeed — that's the deal.</p></div>
-      <div class="feat-card"><div class="fi fi-s">⚡</div><h3 style="font-size:1.15rem;margin-bottom:0.5rem;">Paper Trading Sandbox</h3><p style="color:var(--muted);font-size:0.88rem;line-height:1.6;">Practice with fake money, build real skills. Connected to Alpaca Markets paper API. Zero risk, full learning.</p></div>
-      <div class="feat-card"><div class="fi fi-p">🧠</div><h3 style="font-size:1.15rem;margin-bottom:0.5rem;">Gen Z Wealth Tips</h3><p style="color:var(--muted);font-size:0.88rem;line-height:1.6;">FIRE movement, index funds, side hustles. We translate boring finance into moves that make sense for 2025.</p></div>
-    </div>
-    <div style="text-align:center;margin-top:3rem;">
-      <button class="btn btn-lime" style="font-size:1rem;padding:0.9rem 2.5rem;" onclick="goDash('portfolio')">Enter the App →</button>
+  <!-- ── SOCIAL PROOF STRIP ─────────────────────────────────── -->
+  <div style="background:#f0f0ee;border-top:1px solid #e5e5e0;border-bottom:1px solid #e5e5e0;padding:1.5rem 2rem;text-align:center;">
+    <p style="font-size:0.72rem;color:#bbb;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:1rem;">Inspired by the best</p>
+    <div style="display:flex;justify-content:center;align-items:center;gap:3rem;flex-wrap:wrap;">
+      ${['Delta', 'Kubera', 'Sharesight', 'Lunch Money', 'Yahoo Finance'].map(n=>`<span style="font-family:var(--f1);font-weight:700;font-size:0.88rem;color:#ccc;letter-spacing:0.02em;">${n}</span>`).join('')}
     </div>
   </div>
+
+  <!-- ── FEATURES ───────────────────────────────────────────── -->
+  <div class="feat-section" id="feats">
+    <div style="text-align:center;margin-bottom:4rem;">
+      <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);border-radius:100px;padding:0.4rem 1.1rem;font-size:0.72rem;color:var(--cg);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:1.25rem;">Everything you need</div>
+      <h2 style="font-size:clamp(2.5rem,6vw,4rem);font-weight:900;margin-bottom:0.75rem;color:#0a0a0a;letter-spacing:-0.04em;font-family:var(--f2);">Investing,<br>but make it<br><span style="color:var(--cg);">actually fun.</span></h2>
+      <p style="color:#555;max-width:440px;margin:0 auto;font-size:0.95rem;line-height:1.7;">Built on Delta's aesthetic, Kubera's breadth, Lunch Money's honesty, and Sharesight's precision.</p>
+    </div>
+
+    <div class="g2" style="gap:1.5rem;margin-bottom:1.5rem;">
+      <div class="feat-card">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(0,214,79,0.1);border:1px solid rgba(0,214,79,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;">📊</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;color:#0a0a0a;">Real Portfolio Tracking</h3>
+        <p style="color:#777;font-size:0.88rem;line-height:1.65;">Stocks, crypto, alt assets in one view. See your true returns — not just the numbers your broker wants you to see.</p>
+      </div>
+      <div class="feat-card">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;">🔒</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;color:#0a0a0a;">Privacy First</h3>
+        <p style="color:#777;font-size:0.88rem;line-height:1.65;">No ads, no data selling. We make money when you succeed — that's the deal. Your financial life is yours.</p>
+      </div>
+      <div class="feat-card">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(0,122,255,0.1);border:1px solid rgba(0,122,255,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;">⚡</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;color:#0a0a0a;">Paper Trading Sandbox</h3>
+        <p style="color:#777;font-size:0.88rem;line-height:1.65;">Practice with play money, build real skills. Connected to Alpaca Markets API. Zero risk, full learning.</p>
+      </div>
+      <div class="feat-card">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,214,10,0.1);border:1px solid rgba(255,214,10,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem;">🧠</div>
+        <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:0.5rem;color:#0a0a0a;">Gen Z Wealth Tips</h3>
+        <p style="color:#777;font-size:0.88rem;line-height:1.65;">FIRE movement, index funds, side hustles. Finance in a language that actually makes sense for 2025.</p>
+      </div>
+    </div>
+
+    <!-- Photo + CTA row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;">
+      <div style="border-radius:24px;overflow:hidden;aspect-ratio:16/9;position:relative;">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&h=400&fit=crop&crop=faces" alt="Group of young adults at laptops" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.5),transparent);"></div>
+        <div style="position:absolute;bottom:1.5rem;left:1.5rem;color:#fff;">
+          <div style="font-family:var(--f2);font-size:1.25rem;font-weight:700;">Learn together</div>
+          <div style="font-size:0.82rem;opacity:0.85;">Join a generation building wealth on their terms</div>
+        </div>
+      </div>
+      <div style="background:#0a0a0a;border-radius:24px;padding:2.5rem;display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <div style="font-family:var(--f2);font-size:1.5rem;font-weight:900;color:#fff;margin-bottom:0.75rem;line-height:1.2;letter-spacing:-0.03em;">Start building<br>wealth today.</div>
+          <p style="color:rgba(255,255,255,0.55);font-size:0.9rem;line-height:1.6;">Paper trade with no risk, learn the fundamentals, step into real investing when you're confident.</p>
+        </div>
+        <button class="btn" style="background:var(--cg);color:#000;font-weight:700;font-size:0.95rem;padding:0.85rem 1.75rem;border-radius:100px;margin-top:1.5rem;width:fit-content;" onclick="goDash('portfolio')">
+          Open the app →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <div style="background:#0a0a0a;border-top:none;padding:3rem 2rem;text-align:center;">
+    <div style="font-family:var(--f2);font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:0.5rem;">⚡ Flex</div>
+    <p style="color:#333;font-size:0.82rem;">Paper trading platform. Not financial advice. Built for learning.</p>
+    <p style="color:#222;font-size:0.75rem;margin-top:0.75rem;">Powered by Alpaca Markets API · Built with ❤️ for Gen Z</p>
+  </div>
+
 </div>
 
 <!-- ============= DASHBOARD ============= -->
@@ -339,6 +494,7 @@ function goLanding(){
   document.getElementById('pg-landing').classList.add('active');
   document.getElementById('navPublic').style.display='flex';
   document.getElementById('navDash').style.display='none';
+  document.getElementById('mainNav').classList.remove('dash-nav');
   window.scrollTo(0,0);
 }
 function goDash(tab){
@@ -346,6 +502,7 @@ function goDash(tab){
   document.getElementById('pg-dash').classList.add('active');
   document.getElementById('navPublic').style.display='none';
   document.getElementById('navDash').style.display='flex';
+  document.getElementById('mainNav').classList.add('dash-nav');
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   const sb=document.getElementById('sb-'+tab);
   if(sb)sb.classList.add('active');
@@ -366,12 +523,23 @@ function setOut(id,txt,err=false){const el=document.getElementById(id);if(el){el
 
 // ─── PORTFOLIO PAGE ───────────────────────────────────────────
 function pagePortfolio(){
-  return `${apiStatusBanner()}<div class="ph"><h1 class="pt">📊 My Portfolio</h1><p class="ps">Your financial snapshot — via Alpaca Markets <code style="color:var(--lime);">GET /v2/account</code></p></div>
+  // Trigger live data fetch after render (50ms delay lets DOM settle)
+  setTimeout(loadLivePortfolio, 120);
+  return `${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div>
+    <h1 class="pt">My Portfolio</h1>
+    <p class="ps">Financial snapshot via Alpaca Markets API</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <span id="liveDataBadge"><span style="font-size:0.72rem;color:var(--lmuted);">Connecting…</span></span>
+    <button class="btn btn-outline btn-sm" onclick="loadLivePortfolio()" title="Refresh live data">↻ Refresh</button>
+  </div>
+</div>
 <div class="g4" style="margin-bottom:1.5rem;">
-<div class="stat-c" style="border-color:rgba(200,241,53,0.3);"><div class="s-lbl">Portfolio Value</div><div class="s-val" style="color:var(--lime);">$12,450.80</div><div class="s-chg up">▲ +$284.30 today (+2.34%)</div></div>
-<div class="stat-c"><div class="s-lbl">Cash Available</div><div class="s-val">$3,200.00</div><div class="s-chg" style="color:var(--muted);">Buying power: $8,432.50</div></div>
-<div class="stat-c"><div class="s-lbl">Total Return</div><div class="s-val up">+18.6%</div><div class="s-chg up">▲ +$1,950.80 all time</div></div>
-<div class="stat-c"><div class="s-lbl">Positions</div><div class="s-val">5</div><div class="s-chg" style="color:var(--muted);">4 stocks · 1 crypto</div></div>
+<div class="stat-c" style="border-color:rgba(0,214,79,0.25);"><div class="s-lbl">Portfolio Value</div><div class="s-val" id="live-port-val" style="color:var(--cg);">$12,450.80</div><div class="s-chg" id="live-daily-chg"><span style="color:#00a050;font-size:0.78rem;font-weight:600;">▲ +$284.30 today (+2.34%)</span></div></div>
+<div class="stat-c"><div class="s-lbl">Cash Available</div><div class="s-val" id="live-cash">$3,200.00</div><div class="s-chg" id="live-bp" style="color:var(--lmuted);">Buying power: $8,432.50</div></div>
+<div class="stat-c"><div class="s-lbl">Total Return</div><div class="s-val" id="live-return">+18.6%</div><div class="s-chg" id="live-return-chg"><span style="color:#00a050;font-size:0.78rem;font-weight:600;">▲ +$1,950.80 all time</span></div></div>
+<div class="stat-c"><div class="s-lbl">Positions</div><div class="s-val" id="live-pos-count">5</div><div class="s-chg" id="live-pos-type" style="color:var(--lmuted);">4 stocks · 1 crypto</div></div>
 </div>
 <div class="g2" style="margin-bottom:1.5rem;gap:1.5rem;">
 <div class="card">
@@ -398,6 +566,8 @@ function pagePortfolio(){
     <button class="btn btn-outline btn-sm" onclick="goDash('orders')">+ Place Order</button>
   </div>
   <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unrealised P&L</th><th>Return %</th><th>Today</th></tr></thead><tbody>
+  <tbody id="holdingsTbody">
+  </tbody><!-- live -->
   ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;return`<tr><td><span class="tkr">${p.symbol}</span></td><td>${p.qty}</td><td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td><td>$${parseFloat(p.current_price).toFixed(2)}</td><td>$${parseFloat(p.market_value).toFixed(2)}</td><td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td><td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td><td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td></tr>`;}).join('')}
   </tbody></table></div>
 </div>
@@ -437,7 +607,7 @@ function pagePortfolio(){
 function apiStatusBanner(){
   const hasKeys = CREDS.key && CREDS.secret;
   if(hasKeys){
-    return `<div style="display:flex;align-items:center;gap:0.75rem;background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.2);border-radius:10px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;">
+    return `<div style="display:flex;align-items:center;gap:0.75rem;background:rgba(0,214,79,0.07);border:1px solid rgba(0,214,79,0.2);border-radius:12px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;">
       <span style="color:var(--green);">🔑</span>
       <span style="color:var(--green);font-weight:600;">API keys saved for this session</span>
       <span style="color:var(--muted);">·</span>
@@ -447,11 +617,11 @@ function apiStatusBanner(){
       <button onclick="goDash('settings')" style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:6px;cursor:pointer;">Change</button>
     </div>`;
   } else {
-    return `<div style="display:flex;align-items:center;gap:0.75rem;background:rgba(255,214,10,0.07);border:1px solid rgba(255,214,10,0.25);border-radius:10px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;">
+    return `<div style="display:flex;align-items:center;gap:0.75rem;background:rgba(255,214,10,0.07);border:1px solid rgba(255,214,10,0.25);border-radius:12px;padding:0.65rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;">
       <span>⚠️</span>
       <span style="color:var(--gold);">No API keys saved.</span>
       <span style="color:var(--muted);">Set a Proxy URL or API keys in ⚙️ API Settings for live data.</span>
-      <button onclick="goDash('settings')" style="margin-left:auto;background:var(--lime);border:none;color:var(--dark);font-size:0.75rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:6px;cursor:pointer;font-family:'Syne',sans-serif;">⚙️ Add API Keys</button>
+      <button onclick="goDash('settings')" style="margin-left:auto;background:var(--lime);border:none;color:var(--dark);font-size:0.75rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:6px;cursor:pointer;font-family:var(--f2);">⚙️ Add API Keys</button>
     </div>`;
   }
 }
@@ -602,6 +772,8 @@ return`<div class="card" style="border-color:${up?'rgba(0,230,118,0.2)':'rgba(25
     <button class="btn btn-coral btn-sm" onclick="mockCloseAll()">Close All Positions</button>
   </div>
   <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Current</th><th>Value</th><th>P&L</th><th>P&L %</th><th>Today %</th></tr></thead><tbody>
+  <tbody id="holdingsTbody">
+  </tbody><!-- live -->
   ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;return`<tr><td><span class="tkr">${p.symbol}</span></td><td>${p.qty}</td><td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td><td>$${parseFloat(p.current_price).toFixed(2)}</td><td>$${parseFloat(p.market_value).toFixed(2)}</td><td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td><td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td><td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td></tr>`;}).join('')}
   </tbody></table></div>
 </div>
@@ -710,7 +882,7 @@ ${lessons.map((l,i)=>`
     <div><div class="api-lbl">Starting balance</div><select class="ai ai-full" id="simBalance" onchange="updateSim()"><option value="10000">$10,000</option><option value="50000">$50,000</option><option value="100000">$100,000</option></select></div>
     <div><div class="api-lbl">Market environment</div><select class="ai ai-full" id="simMarket"><option value="bull">🐂 Bull Market</option><option value="bear">🐻 Bear Market</option><option value="sideways">↔️ Sideways</option></select></div>
   </div>
-  <div id="simResult" style="margin-top:1rem;background:#1a1a1a;border-radius:10px;padding:1rem;font-size:0.85rem;color:var(--muted);">Your paper trading account is ready. Head to <button style="background:none;border:none;color:var(--lime);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;" onclick="goDash('orders')">Orders</button> to place your first trade!</div>
+  <div id="simResult" style="margin-top:1rem;background:#1a1a1a;border-radius:10px;padding:1rem;font-size:0.85rem;color:var(--muted);">Your paper trading account is ready. Head to <button style="background:none;border:none;color:var(--lime);cursor:pointer;font-family:var(--f2);font-weight:700;font-size:0.85rem;" onclick="goDash('orders')">Orders</button> to place your first trade!</div>
 </div>`;
 }
 
@@ -752,7 +924,7 @@ function pageKYC(){
 </div>
 <div class="card">
   <h3 style="font-size:1rem;margin-bottom:1.25rem;">🏠 Address</h3>
-  <div class="form-g"><label class="f-lbl">Street Address</label><input class="f-in" placeholder="123 Freedom Street"></div>
+  <div class="form-g"><label class="f-lbl">Street Address</label><input class="f-in" placeholder="123 Flex Street"></div>
   <div class="g2" style="gap:0.75rem;">
     <div class="form-g"><label class="f-lbl">City/Suburb</label><input class="f-in" placeholder="Melbourne"></div>
     <div class="form-g"><label class="f-lbl">Postcode</label><input class="f-in" placeholder="3000"></div>
@@ -831,7 +1003,7 @@ function pageKYC(){
   <div class="api-head"><span class="api-method m-post">POST</span><span class="api-ep">broker-api.alpaca.markets/v1/accounts</span><button class="btn btn-lime btn-sm" onclick="apiSubmitKYC()">Run Mock</button></div>
   <div class="api-body">
     <div class="api-lbl">Request Body (KYC payload)</div>
-    <textarea class="ai ai-full" id="kycBody" rows="12" style="resize:vertical;font-family:monospace;font-size:0.76rem;margin-bottom:0.65rem;">{\n  "contact": {\n    "email_address": "alex@example.com",\n    "phone_number": "+61400000000",\n    "street_address": ["123 Freedom Street"],\n    "city": "Melbourne",\n    "state": "VIC",\n    "postal_code": "3000",\n    "country": "AUS"\n  },\n  "identity": {\n    "given_name": "Alex",\n    "family_name": "Smith",\n    "date_of_birth": "1998-05-15",\n    "tax_id_type": "AUS_TFN",\n    "country_of_citizenship": "AUS",\n    "country_of_birth": "AUS",\n    "country_of_tax_residence": "AUS",\n    "funding_source": ["employment_income"]\n  },\n  "disclosures": {\n    "is_control_person": false,\n    "is_affiliated_exchange_or_finra": false,\n    "is_politically_exposed": false,\n    "immediate_family_exposed": false\n  },\n  "agreements": [\n    {"agreement": "margin_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"},\n    {"agreement": "account_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"},\n    {"agreement": "customer_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"}\n  ]\n}</textarea>
+    <textarea class="ai ai-full" id="kycBody" rows="12" style="resize:vertical;font-family:monospace;font-size:0.76rem;margin-bottom:0.65rem;">{\n  "contact": {\n    "email_address": "alex@example.com",\n    "phone_number": "+61400000000",\n    "street_address": ["123 Flex Street"],\n    "city": "Melbourne",\n    "state": "VIC",\n    "postal_code": "3000",\n    "country": "AUS"\n  },\n  "identity": {\n    "given_name": "Alex",\n    "family_name": "Smith",\n    "date_of_birth": "1998-05-15",\n    "tax_id_type": "AUS_TFN",\n    "country_of_citizenship": "AUS",\n    "country_of_birth": "AUS",\n    "country_of_tax_residence": "AUS",\n    "funding_source": ["employment_income"]\n  },\n  "disclosures": {\n    "is_control_person": false,\n    "is_affiliated_exchange_or_finra": false,\n    "is_politically_exposed": false,\n    "immediate_family_exposed": false\n  },\n  "agreements": [\n    {"agreement": "margin_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"},\n    {"agreement": "account_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"},\n    {"agreement": "customer_agreement", "signed_at": "2025-05-13T10:00:00Z", "ip_address": "203.0.113.0"}\n  ]\n}</textarea>
     <div class="api-out" id="kycAPIOut">// POST /v1/accounts — creates a new brokerage account with KYC data</div>
   </div>
 </div>
@@ -861,7 +1033,7 @@ function pageSettings(){
     <div id="proxyHelp" style="display:none;background:#1a1a1a;border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--muted);line-height:1.8;">
       <strong style="color:var(--text);">Quick setup:</strong><br>
       1. Open Terminal on your Mac Mini<br>
-      2. <code style="color:var(--lime);">cd ~/Desktop/FreedomWealth/freedom-proxy</code><br>
+      2. <code style="color:var(--lime);">cd ~/Desktop/FlexWealth/flex-proxy</code><br>
       3. <code style="color:var(--lime);">./start.sh</code><br>
       4. Copy the <code style="color:var(--lime);">trycloudflare.com</code> URL printed in Terminal into the field above<br>
       5. Click "Save Tunnel & Test" below ✅
@@ -941,7 +1113,7 @@ function initPage(tab){
   // Always restore saved credentials into any inputs on the new page
   setTimeout(()=>{ populateCredFields(); updateNavCredStatus(); },50);
   if(tab==='portfolio'){
-    setTimeout(()=>{ drawPortfolioChart('1W'); drawAllocChart(); },100);
+    setTimeout(()=>{ drawPortfolioChart('1W'); drawAllocChart(); loadLivePortfolio(); },120);
   }
   if(tab==='research'){
     setTimeout(()=>renderAssetsTable(ASSETS),100);
@@ -1101,7 +1273,7 @@ function viewAsset(sym){
   el.innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
     <div><span class="tkr" style="font-size:1.5rem;">${a.symbol}</span><div style="color:var(--muted);font-size:0.88rem;">${a.name}</div></div>
-    <div style="text-align:right;"><div style="font-size:1.75rem;font-weight:800;font-family:'Syne',sans-serif;">$${a.price.toLocaleString()}</div><div class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</div></div>
+    <div style="text-align:right;"><div style="font-size:1.75rem;font-weight:800;font-family:var(--f2);">$${a.price.toLocaleString()}</div><div class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</div></div>
   </div>
   <div style="display:flex;gap:0.5rem;">
     <span class="tag t-blue">${a.exchange}</span>
@@ -1419,7 +1591,7 @@ async function testTunnelConnection(){
       el.innerHTML=`<div style="background:rgba(200,241,53,0.08);border:1px solid var(--lime);border-radius:8px;padding:1rem;font-size:0.82rem;">
         <div style="color:var(--lime);font-weight:700;margin-bottom:0.5rem;">✅ Tunnel connected! ${ms}ms latency</div>
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;color:var(--text);">
-          <span>Proxy: <strong>${data.proxy||'Freedom Proxy'}</strong></span>
+          <span>Proxy: <strong>${data.proxy||'Flex Proxy'}</strong></span>
           <span>Env: <strong style="color:var(--lime);">${data.alpaca_env?.toUpperCase()||'PAPER'}</strong></span>
           <span>Target: <strong>${data.base_url||'paper-api.alpaca.markets'}</strong></span>
         </div>
@@ -1472,6 +1644,144 @@ async function pingAPI(){
     el.innerHTML='<span style="color:var(--lime);">🔑 Keys saved · CORS blocks direct ping from browser — deploy to server for live pings.</span>';
   }
 }
+
+// ─── Live Portfolio Data Loader ───────────────────────────────
+async function loadLivePortfolio(){
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall) return; // no creds — stay on mock data
+
+  // Helper: update a DOM element safely
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=val; };
+  const setTxt = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+
+  // Show loading shimmer on stat cards
+  ['live-port-val','live-cash','live-return','live-pos-count'].forEach(id=>{
+    set(id, '<span style="opacity:0.4;font-size:1rem;">Loading…</span>');
+  });
+
+  try {
+    // ── 1. Account ────────────────────────────────────────────
+    const acctRes = await fetch(apiURL('/v2/account'), { headers: apiHeaders() });
+    if(acctRes.ok){
+      const a = await acctRes.json();
+      const equity     = parseFloat(a.equity||0);
+      const lastEquity = parseFloat(a.last_equity||0);
+      const cash       = parseFloat(a.cash||0);
+      const bp         = parseFloat(a.buying_power||0);
+      const dailyPL    = equity - lastEquity;
+      const dailyPct   = lastEquity > 0 ? ((dailyPL/lastEquity)*100) : 0;
+      const isUp       = dailyPL >= 0;
+      const arrow      = isUp ? '▲' : '▼';
+      const clr        = isUp ? '#00a050' : '#cc3333';
+
+      set('live-port-val', `<span style="font-family:var(--f2);font-size:1.75rem;font-weight:700;color:var(--purple);">$${equity.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`);
+      set('live-cash', `<span style="font-family:var(--f2);font-size:1.75rem;font-weight:700;color:var(--ltext);">$${cash.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`);
+
+      // daily change badge under portfolio value
+      const chgBadge = document.getElementById('live-daily-chg');
+      if(chgBadge) chgBadge.innerHTML = `<span style="color:${clr};font-size:0.78rem;font-weight:600;">${arrow} ${isUp?'+':''}$${dailyPL.toFixed(2)} today (${isUp?'+':''}${dailyPct.toFixed(2)}%)</span>`;
+
+      // buying power under cash
+      const bpEl = document.getElementById('live-bp');
+      if(bpEl) bpEl.textContent = `Buying power: $${bp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    }
+
+    // ── 2. Positions ──────────────────────────────────────────
+    const posRes = await fetch(apiURL('/v2/positions'), { headers: apiHeaders() });
+    if(posRes.ok){
+      const positions = await posRes.json();
+      if(!Array.isArray(positions)) return;
+
+      set('live-pos-count', `<span style="font-family:var(--f2);font-size:1.75rem;font-weight:700;color:var(--ltext);">${positions.length}</span>`);
+
+      // Total unrealised P&L
+      const totalPL = positions.reduce((s,p)=>s+parseFloat(p.unrealized_pl||0),0);
+      const totalMV = positions.reduce((s,p)=>s+parseFloat(p.market_value||0),0);
+      const totalCost = positions.reduce((s,p)=>s+(parseFloat(p.avg_entry_price||0)*parseFloat(p.qty||0)),0);
+      const totalPct = totalCost > 0 ? ((totalPL/totalCost)*100) : 0;
+      const plUp = totalPL >= 0;
+
+      set('live-return', `<span style="font-family:var(--f2);font-size:1.75rem;font-weight:700;color:${plUp?'#00a050':'#cc3333'};">${plUp?'+':''}${totalPct.toFixed(1)}%</span>`);
+
+      const retChg = document.getElementById('live-return-chg');
+      if(retChg) retChg.innerHTML = `<span style="color:${plUp?'#00a050':'#cc3333'};font-size:0.78rem;font-weight:600;">${plUp?'+':''}$${totalPL.toFixed(2)} all time</span>`;
+
+      const posType = document.getElementById('live-pos-type');
+      if(posType){
+        const crypto = positions.filter(p=>p.asset_class==='crypto').length;
+        const stocks = positions.length - crypto;
+        posType.textContent = `${stocks} stock${stocks!==1?'s':''} · ${crypto} crypto`;
+      }
+
+      // ── Update holdings table ───────────────────────────────
+      const tbody = document.getElementById('holdingsTbody');
+      if(tbody && positions.length > 0){
+        tbody.innerHTML = positions.map(p => {
+          const pl    = parseFloat(p.unrealized_pl||0);
+          const plpct = parseFloat(p.unrealized_plpc||0)*100;
+          const td    = parseFloat(p.change_today||0)*100;
+          const up    = pl >= 0;
+          const tdup  = td >= 0;
+          return `<tr>
+            <td><span class="tkr">${p.symbol}</span><div style="font-size:0.72rem;color:var(--lmuted);">${p.asset_class||'equity'}</div></td>
+            <td>${parseFloat(p.qty).toFixed(p.qty<1?4:0)}</td>
+            <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
+            <td>$${parseFloat(p.current_price).toFixed(2)}</td>
+            <td style="font-weight:600;">$${parseFloat(p.market_value).toFixed(2)}</td>
+            <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+            <td class="${up?'up':'down'}">${plpct.toFixed(2)}%</td>
+            <td class="${tdup?'up':'down'}">${tdup?'+':''}${td.toFixed(2)}%</td>
+          </tr>`;
+        }).join('');
+      } else if(tbody){
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lmuted);padding:2rem;">No open positions</td></tr>';
+      }
+
+      // ── Update allocation chart with real data ─────────────
+      if(positions.length > 0){
+        const colors = ['#7B2FFF','#00D4FF','#FF4D6D','#BAFF29','#FFD60A','#BF5AF2','#00FF88'];
+        const total  = positions.reduce((s,p)=>s+parseFloat(p.market_value||0),0);
+        const legend = document.getElementById('allocLegend');
+        if(legend) legend.innerHTML = positions.slice(0,7).map((p,i)=>`
+          <span style="display:flex;align-items:center;gap:0.35rem;font-size:0.75rem;color:var(--ltext);">
+            <span style="width:10px;height:10px;border-radius:3px;background:${colors[i%colors.length]};flex-shrink:0;"></span>
+            ${p.symbol} ${((parseFloat(p.market_value)/total)*100).toFixed(0)}%
+          </span>`).join('');
+
+        // Redraw alloc chart with real data
+        const canvas = document.getElementById('allocChart');
+        if(canvas){
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          let start = -Math.PI/2;
+          const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-8;
+          positions.slice(0,7).forEach((p,i)=>{
+            const angle = (parseFloat(p.market_value)/total)*Math.PI*2;
+            ctx.beginPath(); ctx.moveTo(cx,cy);
+            ctx.arc(cx,cy,r,start,start+angle);
+            ctx.closePath();
+            ctx.fillStyle = colors[i%colors.length];
+            ctx.fill();
+            ctx.strokeStyle='#f8f7ff'; ctx.lineWidth=3; ctx.stroke();
+            start += angle;
+          });
+          ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
+          ctx.fillStyle='#fff'; ctx.fill();
+        }
+      }
+    }
+
+    // ── 3. Live status badge ──────────────────────────────────
+    const badge = document.getElementById('liveDataBadge');
+    if(badge) badge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,160,80,0.08);border:1px solid rgba(0,160,80,0.2);border-radius:20px;padding:0.2rem 0.75rem;font-size:0.72rem;color:#00a050;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:#00a050;display:inline-block;"></span>Live data · ${new Date().toLocaleTimeString()}</span>`;
+
+  } catch(err){
+    console.warn('Live portfolio load error:', err.message);
+    const badge = document.getElementById('liveDataBadge');
+    if(badge) badge.innerHTML = `<span style="font-size:0.72rem;color:var(--lmuted);">⚠️ Could not load live data — showing mock</span>`;
+  }
+}
+
 function mockGetOrders(){apiGetOrders();}
 function showProxyHelp(){
   const el=document.getElementById('proxyHelp');
