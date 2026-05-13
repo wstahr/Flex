@@ -2478,8 +2478,7 @@ async function submitLiveOrder(){
       </div>`;
     }
   } catch(e){
-    if(resultEl) resultEl.innerHTML = `<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:12px;padding:1rem;font-size:0.85rem;color:#FF3B30;">
-      ❌ ${e.message}</div>`;
+    if(resultEl) resultEl.innerHTML = '<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:12px;padding:1rem;font-size:0.85rem;color:#FF3B30;">&#10060; '+(e.message||'Request failed')+'</div>';
   }
 }
 
@@ -2730,7 +2729,7 @@ function updateDrawerCredStatus(){
   } else if(CREDS.key){
     el.innerHTML = '<span style="color:#00a050;">🔑 Keys saved</span>';
   } else {
-    el.innerHTML = '<span style="color:#aaa;">No API keys — <a href="#" onclick="goDash('settings');closeMobileDrawer();return false;" style="color:var(--cg);">Add keys →</a></span>';
+    el.innerHTML = '<span style="color:#aaa;">No API keys — <a href="#" onclick="goDash(&apos;settings&apos;);closeMobileDrawer();return false;" style="color:var(--cg);">Add keys →</a></span>';
   }
 }
 
