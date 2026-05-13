@@ -206,6 +206,7 @@ tr:hover td{background:#fafaf8;}
 .step{flex:1;height:3px;border-radius:2px;background:#e5e5e0;}
 .step.done{background:var(--cg);}
 .step.active{background:#fff;}
+@keyframes spin{to{transform:rotate(360deg);}}
 @media(max-width:768px){.sidebar{display:none;}.main{padding:1.25rem;}.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}.fc{display:none;}}
 </style>
 </head>
@@ -1113,10 +1114,10 @@ function initPage(tab){
   // Always restore saved credentials into any inputs on the new page
   setTimeout(()=>{ populateCredFields(); updateNavCredStatus(); },50);
   if(tab==='portfolio'){
-    setTimeout(()=>{ drawPortfolioChart('1W'); drawAllocChart(); loadLivePortfolio(); },120);
+    setTimeout(()=>{ drawPortfolioChart('1W'); drawAllocChart(null); loadLivePortfolio(); },120);
   }
   if(tab==='research'){
-    setTimeout(()=>renderAssetsTable(ASSETS),100);
+    setTimeout(()=>{ if(!CREDS.proxyUrl&&!CREDS.key){ renderAssetsTable(ASSETS); } else { const tbody=document.getElementById('assetsTbody'); if(tbody) tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:3rem;color:#888;"><div style="font-size:1.5rem;margin-bottom:0.5rem;">🔍</div><div>Search for a symbol or name above</div><div style="font-size:0.8rem;margin-top:0.35rem;color:#bbb;">Live search via Alpaca API</div></td></tr>'; }},100);
   }
   if(tab==='orders'){
     setTimeout(()=>{ document.getElementById('limitPriceG').style.display='none'; },100);
@@ -1174,20 +1175,34 @@ function drawPortfolioChart(period){
   });
 }
 
-function drawAllocChart(){
+// Palette shared by alloc chart and live portfolio loader
+const ALLOC_COLORS = ['#00D64F','#0a0a0a','#FF3B30','#007AFF','#FFD60A','#BF5AF2','#FF9500','#34C759'];
+
+function drawAllocChart(liveData){
   const canvas=document.getElementById('allocChart');
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
-  const data=[
-    {label:'NVDA',value:4376,color:'#C8F135'},
-    {label:'BTC',value:3371,color:'#3ABCFF'},
-    {label:'TSLA',value:1976,color:'#FF4B4B'},
-    {label:'AAPL',value:1934,color:'#9B5DE5'},
-    {label:'MSFT',value:1246,color:'#FFD60A'},
-  ];
+
+  // Use live positions if provided, else fall back to mock
+  const data = liveData && liveData.length > 0
+    ? liveData.map((p,i)=>({
+        label: p.symbol,
+        value: parseFloat(p.market_value||0),
+        color: ALLOC_COLORS[i % ALLOC_COLORS.length]
+      }))
+    : [
+        {label:'NVDA',value:4376,color:ALLOC_COLORS[0]},
+        {label:'BTC', value:3371,color:ALLOC_COLORS[1]},
+        {label:'TSLA',value:1976,color:ALLOC_COLORS[2]},
+        {label:'AAPL',value:1934,color:ALLOC_COLORS[3]},
+        {label:'MSFT',value:1246,color:ALLOC_COLORS[4]},
+      ];
+
   const total=data.reduce((s,d)=>s+d.value,0);
+  if(total<=0) return;
   let start=-Math.PI/2;
-  const cx=canvas.width/2,cy=canvas.height/2,r=Math.min(cx,cy)-8;
+  const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+
   data.forEach(d=>{
     const angle=(d.value/total)*Math.PI*2;
     ctx.beginPath();
@@ -1196,19 +1211,23 @@ function drawAllocChart(){
     ctx.closePath();
     ctx.fillStyle=d.color;
     ctx.fill();
-    ctx.strokeStyle='#242424';
+    ctx.strokeStyle='#f7f7f5';
     ctx.lineWidth=3;
     ctx.stroke();
     start+=angle;
   });
-  // Center hole
+  // Donut hole — match light bg
   ctx.beginPath();
-  ctx.arc(cx,cy,r*0.55,0,Math.PI*2);
-  ctx.fillStyle='#242424';
+  ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
+  ctx.fillStyle='#fff';
   ctx.fill();
-  // Legend
+
   const legend=document.getElementById('allocLegend');
-  if(legend) legend.innerHTML=data.map(d=>`<span style="display:flex;align-items:center;gap:0.35rem;font-size:0.75rem;"><span style="width:10px;height:10px;border-radius:2px;background:${d.color};flex-shrink:0;"></span>${d.label} ${(d.value/total*100).toFixed(0)}%</span>`).join('');
+  if(legend) legend.innerHTML=data.map(d=>`
+    <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:#333;">
+      <span style="width:10px;height:10px;border-radius:3px;background:${d.color};flex-shrink:0;display:inline-block;"></span>
+      <strong>${d.label}</strong> ${(d.value/total*100).toFixed(0)}%
+    </span>`).join('');
 }
 
 // ─── API Actions ──────────────────────────────────────────────
@@ -1241,30 +1260,108 @@ function calcPnL(){
   const pct=last>0?((diff/last)*100).toFixed(2):0;
   setOut('pnlOut',`// Portfolio P&L Calculation\n// ───────────────────────────\n// Current equity:    $${eq.toFixed(2)}\n// Last close equity: $${last.toFixed(2)}\n// ───────────────────────────\n// Daily P&L:   ${diff>=0?'+':''}$${diff.toFixed(2)}\n// Daily %:     ${diff>=0?'+':''}${pct}%\n// Status:      ${diff>=0?'🟢 POSITIVE DAY':'🔴 NEGATIVE DAY'}`);
 }
-function filterAssets(){
-  const q=(document.getElementById('assetQ')?.value||'').toLowerCase();
+async function filterAssets(){
+  const q=(document.getElementById('assetQ')?.value||'').trim();
   const cls=document.getElementById('assetCls')?.value||'';
-  const filtered=ASSETS.filter(a=>(a.symbol.toLowerCase().includes(q)||a.name.toLowerCase().includes(q))&&(!cls||a.asset_class===cls));
+  const tbody=document.getElementById('assetsTbody');
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+
+  // Show loading state
+  if(tbody) tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:2rem;color:#888;">
+    <span style="display:inline-flex;align-items:center;gap:0.5rem;">
+      <span style="width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--cg);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>
+      ${canCall ? 'Searching Alpaca…' : 'Searching…'}
+    </span>
+  </td></tr>`;
+
+  if(canCall && q.length > 0){
+    try{
+      // First try exact symbol lookup via /v2/assets/{symbol}
+      const symRes = await fetch(apiURL('/v2/assets/'+encodeURIComponent(q.toUpperCase())), { headers: apiHeaders() });
+      if(symRes.ok){
+        const asset = await symRes.json();
+        if(asset && asset.symbol){
+          renderAssetsTable([normaliseAsset(asset)]);
+          return;
+        }
+      }
+    }catch(e){ /* fall through */ }
+
+    try{
+      // Search full assets list filtered by class
+      const clsParam = cls ? '&asset_class='+cls : '';
+      const res = await fetch(apiURL('/v2/assets?status=active'+clsParam), { headers: apiHeaders() });
+      if(res.ok){
+        const all = await res.json();
+        if(Array.isArray(all)){
+          const ql = q.toLowerCase();
+          const filtered = all.filter(a=>
+            a.symbol.toLowerCase().includes(ql) ||
+            (a.name||'').toLowerCase().includes(ql)
+          ).slice(0,20);
+          if(filtered.length > 0){
+            renderAssetsTable(filtered.map(normaliseAsset));
+            return;
+          } else {
+            if(tbody) tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:2rem;color:#888;">No results for "${q}"</td></tr>`;
+            return;
+          }
+        }
+      }
+    }catch(e){
+      console.warn('Live asset search error:', e.message);
+      // Fall through to mock
+    }
+  }
+
+  // Fallback: filter mock data
+  const ql = q.toLowerCase();
+  const filtered = ASSETS.filter(a=>
+    (!ql || a.symbol.toLowerCase().includes(ql) || a.name.toLowerCase().includes(ql)) &&
+    (!cls || a.asset_class===cls)
+  );
   renderAssetsTable(filtered);
+}
+
+// Normalise an Alpaca asset response into our display format
+function normaliseAsset(a){
+  return {
+    symbol:      a.symbol,
+    name:        a.name || a.symbol,
+    exchange:    a.exchange || '—',
+    asset_class: a.class || a.asset_class || 'us_equity',
+    tradable:    a.tradable !== false,
+    fractionable:a.fractionable === true,
+    price:       a.price || null,   // Alpaca /assets doesn't include price
+    change:      null,
+    _live: true
+  };
 }
 function renderAssetsTable(assets){
   const tbody=document.getElementById('assetsTbody');
   if(!tbody)return;
+  if(!assets || assets.length===0){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:2rem;color:#888;">No assets found</td></tr>';
+    return;
+  }
   tbody.innerHTML=assets.map(a=>`
   <tr>
-    <td><span class="tkr">${a.symbol}</span></td>
-    <td>${a.name}</td>
-    <td><span class="tag t-grey">${a.exchange}</span></td>
-    <td><span class="tag ${a.asset_class==='crypto'?'t-gold':'t-blue'}">${a.asset_class}</span></td>
-    <td>$${a.price.toLocaleString()}</td>
-    <td class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</td>
-    <td>${a.tradable?'<span class="tag t-green">✓</span>':'<span class="tag t-red">✗</span>'}</td>
-    <td>${a.fractionable?'<span class="tag t-green">✓</span>':'<span class="tag t-red">✗</span>'}</td>
-    <td><button class="btn btn-lime btn-sm" onclick="viewAsset('${a.symbol}')">View</button></td>
+    <td><span class="tkr">${a.symbol}</span>${a._live?'<span style="font-size:0.65rem;color:var(--cg);margin-left:4px;font-weight:700;">LIVE</span>':''}</td>
+    <td style="color:#555;font-size:0.85rem;">${a.name||'—'}</td>
+    <td><span class="tag t-grey">${a.exchange||'—'}</span></td>
+    <td><span class="tag ${(a.asset_class||'').includes('crypto')?'t-gold':'t-blue'}">${a.asset_class||'—'}</span></td>
+    <td style="font-family:var(--f2);font-weight:700;">${a.price!=null?'$'+parseFloat(a.price).toLocaleString():'<span style="color:#aaa;">—</span>'}</td>
+    <td>${a.change!=null?(a.change>=0?`<span class="up">▲ ${Math.abs(a.change)}%</span>`:`<span class="down">▼ ${Math.abs(a.change)}%</span>`):'<span style="color:#aaa;">—</span>'}</td>
+    <td>${a.tradable!==false?'<span class="tag t-green">✓ Yes</span>':'<span class="tag t-red">✗</span>'}</td>
+    <td>${a.fractionable===true?'<span class="tag t-green">✓ Yes</span>':'<span class="tag t-grey">—</span>'}</td>
+    <td><button class="btn btn-lime btn-sm" onclick="viewAsset('${a.symbol}',${JSON.stringify(a).replace(/'/g,"\x27")})">View</button></td>
   </tr>`).join('');
+  // store for viewAsset lookups
+  window._lastAssets = assets;
 }
-function viewAsset(sym){
-  const a=ASSETS.find(x=>x.symbol===sym);
+function viewAsset(sym, assetObj){
+  // Use passed object if available (live result), else find in mock ASSETS
+  const a = assetObj || (window._lastAssets||[]).find(x=>x.symbol===sym) || ASSETS.find(x=>x.symbol===sym);
   if(!a)return;
   const el=document.getElementById('assetCard');
   el.style.display='block';
@@ -1273,7 +1370,7 @@ function viewAsset(sym){
   el.innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
     <div><span class="tkr" style="font-size:1.5rem;">${a.symbol}</span><div style="color:var(--muted);font-size:0.88rem;">${a.name}</div></div>
-    <div style="text-align:right;"><div style="font-size:1.75rem;font-weight:800;font-family:var(--f2);">$${a.price.toLocaleString()}</div><div class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</div></div>
+    <div style="text-align:right;"><div style="font-size:1.75rem;font-weight:800;font-family:var(--f2);">${a.price!=null?'$'+parseFloat(a.price).toLocaleString():'<span style=\'font-size:1rem;color:#888;\'>Price via proxy</span>'}</div>${a.change!=null?`<div class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</div>`:''}</div>
   </div>
   <div style="display:flex;gap:0.5rem;">
     <span class="tag t-blue">${a.exchange}</span>
@@ -1739,7 +1836,7 @@ async function loadLivePortfolio(){
 
       // ── Update allocation chart with real data ─────────────
       if(positions.length > 0){
-        const colors = ['#7B2FFF','#00D4FF','#FF4D6D','#BAFF29','#FFD60A','#BF5AF2','#00FF88'];
+        const colors = ALLOC_COLORS;
         const total  = positions.reduce((s,p)=>s+parseFloat(p.market_value||0),0);
         const legend = document.getElementById('allocLegend');
         if(legend) legend.innerHTML = positions.slice(0,7).map((p,i)=>`
@@ -1748,26 +1845,8 @@ async function loadLivePortfolio(){
             ${p.symbol} ${((parseFloat(p.market_value)/total)*100).toFixed(0)}%
           </span>`).join('');
 
-        // Redraw alloc chart with real data
-        const canvas = document.getElementById('allocChart');
-        if(canvas){
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0,0,canvas.width,canvas.height);
-          let start = -Math.PI/2;
-          const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-8;
-          positions.slice(0,7).forEach((p,i)=>{
-            const angle = (parseFloat(p.market_value)/total)*Math.PI*2;
-            ctx.beginPath(); ctx.moveTo(cx,cy);
-            ctx.arc(cx,cy,r,start,start+angle);
-            ctx.closePath();
-            ctx.fillStyle = colors[i%colors.length];
-            ctx.fill();
-            ctx.strokeStyle='#f8f7ff'; ctx.lineWidth=3; ctx.stroke();
-            start += angle;
-          });
-          ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
-          ctx.fillStyle='#fff'; ctx.fill();
-        }
+        // Redraw alloc chart with live position data
+        drawAllocChart(positions.slice(0,8));
       }
     }
 
