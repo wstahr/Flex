@@ -670,10 +670,15 @@ function pageResearch(){
 
 // ─── ORDERS PAGE ─────────────────────────────────────────────
 function pageOrders(){
-  return`${apiStatusBanner()}<div class="ph"><h1 class="pt">📋 Orders</h1><p class="ps">Place & manage orders via Alpaca <code style="color:var(--lime);">/v2/orders</code></p></div>
+  // Load live orders after render
+  setTimeout(loadLiveOrders, 150);
+  return`${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div><h1 class="pt">Orders</h1><p class="ps">Place & manage orders via Alpaca <code style="color:var(--cg);">/v2/orders</code></p></div>
+  <span id="ordersLiveBadge" style="font-size:0.72rem;color:#aaa;">Loading…</span>
+</div>
 <div class="g2" style="gap:1.5rem;margin-bottom:2rem;">
 <div class="card">
-  <h3 style="font-size:1rem;margin-bottom:1.1rem;">Place Order</h3>
+  <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.1rem;">Place Order</h3>
   <div class="order-tabs">
     <button class="o-tab buy active" id="tabBuy" onclick="setOrderSide('buy')">Buy</button>
     <button class="o-tab sell" id="tabSell" onclick="setOrderSide('sell')">Sell</button>
@@ -685,21 +690,28 @@ function pageOrders(){
     <div class="form-g" id="limitPriceG"><label class="f-lbl">Limit Price ($)</label><input class="f-in" id="oLimitPrice" placeholder="190.00" type="number" oninput="previewOrder()"></div>
   </div>
   <div class="form-g"><label class="f-lbl">Time in Force</label><select class="f-in" id="oTIF" onchange="previewOrder()"><option value="day">Day</option><option value="gtc">Good Til Cancelled (GTC)</option><option value="ioc">Immediate or Cancel (IOC)</option><option value="fok">Fill or Kill (FOK)</option></select></div>
-  <div id="orderPreview" style="background:#1a1a1a;border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.83rem;color:var(--muted);line-height:1.7;">Fill in the form to preview your order.</div>
-  <button class="btn btn-lime btn-full" onclick="mockPlaceOrder()">📤 Place Order (Mock)</button>
+  <div id="orderPreview" style="background:#f7f7f5;border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.83rem;color:#888;line-height:1.7;border:1px solid #eee;">Fill in the form to preview your order.</div>
+  <button class="btn btn-lime btn-full" onclick="submitLiveOrder()">Place Order</button>
   <div id="orderResult" style="margin-top:0.75rem;display:none;"></div>
 </div>
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-    <h3 style="font-size:1rem;">Order History</h3>
-    <div class="tg-group">
-      <button class="tg-btn active" onclick="filterOrders(this,'all')">All</button>
-      <button class="tg-btn" onclick="filterOrders(this,'filled')">Filled</button>
-      <button class="tg-btn" onclick="filterOrders(this,'pending_new')">Pending</button>
-      <button class="tg-btn" onclick="filterOrders(this,'cancelled')">Cancelled</button>
+    <h3 style="font-size:1rem;font-weight:700;">Order History</h3>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <div class="tg-group">
+        <button class="tg-btn active" onclick="filterOrders(this,'all')">All</button>
+        <button class="tg-btn" onclick="filterOrders(this,'open')">Open</button>
+        <button class="tg-btn" onclick="filterOrders(this,'closed')">Closed</button>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadLiveOrders()" title="Refresh">↻</button>
     </div>
   </div>
-  <div id="ordersList">${renderOrdersList(ORDERS)}</div>
+  <div id="ordersList">
+    <div style="text-align:center;padding:2rem;color:#aaa;">
+      <div style="font-size:1.25rem;margin-bottom:0.5rem;">📋</div>
+      <div>Loading orders…</div>
+    </div>
+  </div>
 </div>
 </div>
 <h3 style="margin-bottom:0.75rem;">🔌 API Testers — Orders Endpoints</h3>
@@ -751,36 +763,50 @@ function renderOrdersList(orders){
 
 // ─── POSITIONS PAGE ───────────────────────────────────────────
 function pagePositions(){
-  return`${apiStatusBanner()}<div class="ph"><h1 class="pt">📌 Positions</h1><p class="ps">Open positions via Alpaca <code style="color:var(--lime);">/v2/positions</code></p></div>
-<div class="g3" style="margin-bottom:2rem;">
-${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0,pct=(parseFloat(p.unrealized_plpc)*100).toFixed(2),td=(parseFloat(p.change_today)*100).toFixed(2);
-return`<div class="card" style="border-color:${up?'rgba(0,230,118,0.2)':'rgba(255,75,75,0.2)'};">
-  <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;">
-    <div><div class="tkr" style="font-size:1.15rem;">${p.symbol}</div><div style="font-size:0.72rem;color:var(--muted);">${p.qty} shares</div></div>
-    <span class="tag ${up?'t-green':'t-red'}">${up?'▲':'▼'} ${pct}%</span>
+  setTimeout(loadLivePositions, 150);
+  return`${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div><h1 class="pt">Positions</h1><p class="ps">Live open positions via <code style="color:var(--cg);">GET /v2/positions</code></p></div>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <span id="posLiveBadge" style="font-size:0.72rem;color:#aaa;">Loading…</span>
+    <button class="btn btn-outline btn-sm" onclick="loadLivePositions()">↻ Refresh</button>
+    <button class="btn btn-coral btn-sm" onclick="closeAllPositions()">Sell All</button>
   </div>
-  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.4rem;"><span style="color:var(--muted);">Market Value</span><strong>$${parseFloat(p.market_value).toFixed(2)}</strong></div>
-  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.4rem;"><span style="color:var(--muted);">Avg Cost</span><span>$${parseFloat(p.avg_entry_price).toFixed(2)}</span></div>
-  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.75rem;"><span style="color:var(--muted);">Current</span><span>$${parseFloat(p.current_price).toFixed(2)}</span></div>
-  <div style="border-top:1px solid var(--border);padding-top:0.65rem;display:flex;justify-content:space-between;align-items:center;">
-    <div><div style="font-size:0.72rem;color:var(--muted);">Unrealised P&L</div><div class="${up?'up':'down'}" style="font-weight:700;">${up?'+':''}$${pl.toFixed(2)}</div></div>
-    <div style="text-align:right;"><div style="font-size:0.72rem;color:var(--muted);">Today</div><div class="${parseFloat(p.change_today)>=0?'up':'down'}" style="font-weight:700;">${parseFloat(p.change_today)>=0?'+':''}${td}%</div></div>
-  </div>
-  <button class="btn btn-outline btn-sm btn-full" style="margin-top:0.75rem;" onclick="showClosePosition('${p.symbol}')">Close Position</button>
-</div>`;}).join('')}
 </div>
-<div id="closePositionBox" style="display:none;margin-bottom:1.5rem;"></div>
+
+<!-- Position cards grid — filled by loadLivePositions -->
+<div id="posCardsGrid" class="g3" style="margin-bottom:2rem;">
+  ${POS.map(p=>renderPosCard(p)).join('')}
+</div>
+
+<!-- Confirm sell modal -->
+<div id="sellConfirmBox" style="display:none;margin-bottom:1.5rem;"></div>
+
+<!-- Positions table — filled by loadLivePositions -->
 <div class="card" style="margin-bottom:1.5rem;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-    <h3 style="font-size:1rem;">All Positions</h3>
-    <button class="btn btn-coral btn-sm" onclick="mockCloseAll()">Close All Positions</button>
+    <h3 style="font-size:1rem;font-weight:700;">All Positions</h3>
+    <span id="posTableBadge" style="font-size:0.78rem;color:#aaa;"></span>
   </div>
-  <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Current</th><th>Value</th><th>P&L</th><th>P&L %</th><th>Today %</th></tr></thead>
-  <tbody id="posPageTbody">
-  ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;return`<tr><td><span class="tkr">${p.symbol}</span></td><td>${p.qty}</td><td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td><td>$${parseFloat(p.current_price).toFixed(2)}</td><td>$${parseFloat(p.market_value).toFixed(2)}</td><td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td><td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td><td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td></tr>`;}).join('')}
-  </tbody></table></div>
+  <div class="tbl-w"><table>
+    <thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Current</th><th>Value</th><th>P&L</th><th>Return %</th><th>Today</th><th>Action</th></tr></thead>
+    <tbody id="posPageTbody">
+      ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;
+        return`<tr>
+          <td><span class="tkr">${p.symbol}</span></td>
+          <td>${p.qty}</td>
+          <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
+          <td>$${parseFloat(p.current_price).toFixed(2)}</td>
+          <td style="font-weight:700;">$${parseFloat(p.market_value).toFixed(2)}</td>
+          <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+          <td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td>
+          <td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td>
+          <td><button class="btn btn-coral btn-sm" onclick="confirmSell('${p.symbol}','${p.qty}','${parseFloat(p.market_value).toFixed(2)}')">Sell</button></td>
+        </tr>`;}).join('')}
+    </tbody>
+  </table></div>
 </div>
-<h3 style="margin-bottom:0.75rem;">🔌 API Testers — Positions Endpoints</h3>
+
+<h3 style="margin-bottom:0.75rem;font-size:1rem;font-weight:700;">🔌 API Testers — Positions</h3>
 <div class="g2" style="gap:1rem;">
 <div class="api-box">
   <div class="api-head"><span class="api-method m-get">GET</span><span class="api-ep">/v2/positions</span><button class="btn btn-lime btn-sm" onclick="apiGetPositions()">Run</button></div>
@@ -800,10 +826,37 @@ return`<div class="card" style="border-color:${up?'rgba(0,230,118,0.2)':'rgba(25
   <div class="api-body">
     <div class="irow">
       <div style="flex:1;"><div class="api-lbl">Symbol</div><input class="ai ai-full" id="closeSym" value="AAPL"></div>
-      <div style="flex:1;"><div class="api-lbl">Qty (optional)</div><input class="ai ai-full" id="closeQty" placeholder="leave blank for full position" type="number"></div>
+      <div style="flex:1;"><div class="api-lbl">Qty (optional, blank = full)</div><input class="ai ai-full" id="closeQty" placeholder="leave blank for full position" type="number"></div>
     </div>
-    <div class="api-out" id="closePosOut">// Closes the specified position</div>
+    <div class="api-out" id="closePosOut">// DELETE /v2/positions/{symbol} — closes position</div>
   </div>
+</div>`;
+}
+
+// Render a single position card (reused by mock + live)
+function renderPosCard(p){
+  const pl=parseFloat(p.unrealized_pl||0),up=pl>=0;
+  const pct=(parseFloat(p.unrealized_plpc||0)*100).toFixed(2);
+  const td=(parseFloat(p.change_today||0)*100).toFixed(2);
+  const tdUp=parseFloat(p.change_today||0)>=0;
+  return`<div class="card" style="border-color:${up?'rgba(0,214,79,0.25)':'rgba(255,59,48,0.25)'};">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.85rem;">
+    <div>
+      <div class="tkr" style="font-size:1.2rem;">${p.symbol}</div>
+      <div style="font-size:0.72rem;color:#aaa;margin-top:0.15rem;">${parseFloat(p.qty).toFixed(p.qty<1?4:0)} ${p.asset_class==='crypto'?'units':'shares'}</div>
+    </div>
+    <span class="tag ${up?'t-green':'t-red'}" style="font-size:0.8rem;">${up?'▲':'▼'} ${pct}%</span>
+  </div>
+  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.35rem;"><span style="color:#aaa;">Market Value</span><strong style="color:#111;">$${parseFloat(p.market_value||0).toFixed(2)}</strong></div>
+  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.35rem;"><span style="color:#aaa;">Avg Cost</span><span>$${parseFloat(p.avg_entry_price||0).toFixed(2)}</span></div>
+  <div style="font-size:0.82rem;display:flex;justify-content:space-between;margin-bottom:0.75rem;"><span style="color:#aaa;">Current Price</span><span id="posPrice_${p.symbol}" style="font-weight:700;">$${parseFloat(p.current_price||0).toFixed(2)}</span></div>
+  <div style="border-top:1px solid #f0f0ee;padding-top:0.65rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+    <div><div style="font-size:0.68rem;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">Unrealised P&L</div><div class="${up?'up':'down'}" style="font-weight:700;font-family:var(--f2);">${up?'+':''}$${pl.toFixed(2)}</div></div>
+    <div style="text-align:right;"><div style="font-size:0.68rem;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;">Today</div><div class="${tdUp?'up':'down'}" style="font-weight:700;">${tdUp?'+':''}${td}%</div></div>
+  </div>
+  <button class="btn btn-coral btn-sm btn-full" onclick="confirmSell('${p.symbol}','${parseFloat(p.qty).toFixed(8)}','${parseFloat(p.market_value||0).toFixed(2)}')">
+    Sell ${p.symbol}
+  </button>
 </div>`;
 }
 
@@ -1122,7 +1175,10 @@ function initPage(tab){
     setTimeout(()=>{ if(!CREDS.proxyUrl&&!CREDS.key){ renderAssetsTable(ASSETS); } else { const tbody=document.getElementById('assetsTbody'); if(tbody) tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:3rem;color:#888;"><div style="font-size:1.5rem;margin-bottom:0.5rem;">🔍</div><div>Search for a symbol or name above</div><div style="font-size:0.8rem;margin-top:0.35rem;color:#bbb;">Live search via Alpaca API</div></td></tr>'; }},100);
   }
   if(tab==='orders'){
-    setTimeout(()=>{ document.getElementById('limitPriceG').style.display='none'; },100);
+    setTimeout(()=>{ document.getElementById('limitPriceG').style.display='none'; loadLiveOrders(); },100);
+  }
+  if(tab==='positions'){
+    setTimeout(()=>loadLivePositions(),100);
   }
   if(tab==='tips'){
     setTimeout(()=>calcCompound(),100);
@@ -1496,6 +1552,9 @@ function previewOrder(){
 function filterOrders(btn,status){
   document.querySelectorAll('.tg-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  // If live, reload with correct status filter
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(canCall){ loadLiveOrders(); return; }
   document.querySelectorAll('.order-row').forEach(r=>{
     r.style.display=(status==='all'||r.dataset.status===status)?'flex':'none';
   });
@@ -2078,6 +2137,306 @@ async function fetchAndFillTablePrices(symbols){
       if(cells[5]) cells[5].innerHTML = fmtChg(p.chg, p.chgPct);
     });
   } catch(e){ console.warn('fetchAndFillTablePrices error:', e.message); }
+}
+
+
+// ─── Load Live Orders ─────────────────────────────────────────
+async function loadLiveOrders(){
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  const badge = document.getElementById('ordersLiveBadge');
+  const list  = document.getElementById('ordersList');
+  if(!canCall){
+    if(list) list.innerHTML = renderOrdersList(ORDERS);
+    if(badge) badge.textContent = 'Demo data';
+    return;
+  }
+  try{
+    const status = document.querySelector('.tg-btn.active')?.textContent?.toLowerCase()||'all';
+    const apiStatus = status==='open' ? 'open' : status==='closed' ? 'closed' : 'all';
+    const res = await fetch(apiURL('/v2/orders?status='+apiStatus+'&limit=50&direction=desc'), { headers: apiHeaders() });
+    if(res.ok){
+      const orders = await res.json();
+      if(badge) badge.innerHTML = `<span style="color:var(--cg);font-weight:600;">● ${orders.length} order${orders.length!==1?'s':''} · ${new Date().toLocaleTimeString()}</span>`;
+      if(list){
+        if(orders.length === 0){
+          list.innerHTML = `<div style="text-align:center;padding:2.5rem;color:#aaa;">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">📭</div>
+            <div style="font-weight:600;color:#333;">No orders found</div>
+            <div style="font-size:0.82rem;margin-top:0.35rem;">Place your first order above.</div>
+          </div>`;
+        } else {
+          list.innerHTML = orders.map(o => {
+            const side = o.side;
+            const sideClr = side==='buy' ? '#00a050' : '#FF3B30';
+            const statusTag = o.status==='filled' ? 't-green' : o.status==='canceled'||o.status==='cancelled' ? 't-red' : o.status==='new'||o.status==='partially_filled' ? 't-blue' : 't-grey';
+            const price = o.filled_avg_price ? `@ $${parseFloat(o.filled_avg_price).toFixed(2)}` : o.limit_price ? `limit $${parseFloat(o.limit_price).toFixed(2)}` : '';
+            const date = new Date(o.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+            const canCancel = ['new','partially_filled','pending_new','accepted','held'].includes(o.status);
+            return `<div class="order-row" data-status="${o.status}" style="padding:0.9rem 1rem;border-radius:12px;border:1px solid #f0f0ee;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;background:#fff;">
+              <div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <span class="tkr" style="font-size:1rem;">${o.symbol}</span>
+                  <span style="font-size:0.75rem;font-weight:700;color:${sideClr};background:${side==='buy'?'rgba(0,160,80,0.08)':'rgba(255,59,48,0.08)'};padding:0.1rem 0.5rem;border-radius:100px;">${side.toUpperCase()}</span>
+                </div>
+                <div style="font-size:0.72rem;color:#aaa;margin-top:0.25rem;">${o.type} · ${o.qty||o.notional||'—'} ${o.qty?'shares':'USD'} · ${date}</div>
+                ${price?`<div style="font-size:0.72rem;color:#555;margin-top:0.1rem;">${price}</div>`:''}
+              </div>
+              <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;">
+                <span class="tag ${statusTag}">${o.status}</span>
+                ${canCancel?`<button class="btn btn-outline btn-sm" style="font-size:0.7rem;padding:0.25rem 0.6rem;color:#FF3B30;border-color:#FF3B30;" onclick="cancelLiveOrder('${o.id}')">Cancel</button>`:''}
+              </div>
+            </div>`;
+          }).join('');
+        }
+      }
+    } else {
+      if(badge) badge.innerHTML = '<span style="color:#FF3B30;">⚠️ Error loading orders</span>';
+      if(list) list.innerHTML = renderOrdersList(ORDERS);
+    }
+  } catch(e){
+    console.warn('loadLiveOrders error:', e.message);
+    if(badge) badge.innerHTML = '<span style="color:#aaa;">⚠️ Showing demo data</span>';
+    if(list) list.innerHTML = renderOrdersList(ORDERS);
+  }
+}
+
+// Cancel a live order
+async function cancelLiveOrder(orderId){
+  if(!confirm('Cancel order '+orderId+'?')) return;
+  try{
+    const res = await fetch(apiURL('/v2/orders/'+orderId), { method:'DELETE', headers: apiHeaders() });
+    if(res.ok || res.status===204){
+      showToast('Order cancelled ✓', 'green');
+      setTimeout(loadLiveOrders, 500);
+    } else {
+      const d = await res.json();
+      showToast('Cancel failed: '+(d.message||res.status), 'red');
+    }
+  } catch(e){ showToast('Cancel error: '+e.message,'red'); }
+}
+
+// Submit a live order
+async function submitLiveOrder(){
+  const sym = document.getElementById('oSym')?.value?.trim();
+  const qty = document.getElementById('oQty')?.value;
+  const type = document.getElementById('oType')?.value||'market';
+  const tif  = document.getElementById('oTIF')?.value||'day';
+  const lp   = document.getElementById('oLimitPrice')?.value;
+  const side = document.getElementById('tabBuy')?.classList.contains('active')?'buy':'sell';
+  if(!sym||!qty){ showToast('Enter a symbol and quantity','red'); return; }
+  const body = { symbol:sym, qty:qty, side, type, time_in_force:tif };
+  if(type!=='market' && lp) body.limit_price = lp;
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  const resultEl = document.getElementById('orderResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="color:#888;font-size:0.85rem;">⏳ Submitting order…</div>';
+  if(!canCall){
+    // Mock response
+    const mock = {...body, id:'ord_'+Math.random().toString(36).substr(2,8), status:'accepted', created_at:new Date().toISOString()};
+    resultEl.innerHTML = `<div style="background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:1rem;font-size:0.82rem;">
+      <div style="color:var(--cg);font-weight:700;margin-bottom:0.35rem;">✅ Order placed (demo)</div>
+      <code style="font-size:0.75rem;color:#555;">${JSON.stringify(mock,null,2)}</code></div>`;
+    return;
+  }
+  try{
+    const res = await fetch(apiURL('/v2/orders'), { method:'POST', headers:{...apiHeaders(),'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const data = await res.json();
+    if(res.ok){
+      resultEl.innerHTML = `<div style="background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:1rem;font-size:0.82rem;">
+        <div style="color:var(--cg);font-weight:700;margin-bottom:0.5rem;">✅ Order submitted</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.82rem;color:#333;">
+          <span>ID: <strong>${data.id}</strong></span>
+          <span>Symbol: <strong>${data.symbol}</strong></span>
+          <span>Side: <strong style="color:${data.side==='buy'?'#00a050':'#FF3B30'}">${data.side?.toUpperCase()}</strong></span>
+          <span>Status: <strong>${data.status}</strong></span>
+        </div>
+      </div>`;
+      showToast('Order submitted ✓','green');
+      setTimeout(loadLiveOrders, 800);
+    } else {
+      resultEl.innerHTML = `<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:1rem;font-size:0.82rem;color:#FF3B30;">
+        ❌ ${data.message||data.code||'Order failed'}</div>`;
+    }
+  } catch(e){
+    resultEl.innerHTML = `<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:1rem;font-size:0.82rem;color:#FF3B30;">
+      ❌ ${e.message}</div>`;
+  }
+}
+
+// ─── Load Live Positions ──────────────────────────────────────
+async function loadLivePositions(){
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  const badge  = document.getElementById('posLiveBadge');
+  const grid   = document.getElementById('posCardsGrid');
+  const tbody  = document.getElementById('posPageTbody');
+  const tblBadge = document.getElementById('posTableBadge');
+
+  if(!canCall){
+    if(badge) badge.textContent = 'Demo data';
+    return;
+  }
+
+  if(badge) badge.innerHTML = '<span style="color:#aaa;">⏳ Loading…</span>';
+
+  try{
+    const res = await fetch(apiURL('/v2/positions'), { headers: apiHeaders() });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const positions = await res.json();
+    if(!Array.isArray(positions)) throw new Error('Unexpected response');
+
+    const now = new Date().toLocaleTimeString();
+    if(badge) badge.innerHTML = `<span style="color:var(--cg);font-weight:600;">● ${positions.length} position${positions.length!==1?'s':''} · ${now}</span>`;
+    if(tblBadge) tblBadge.textContent = positions.length > 0 ? `${positions.length} open` : '';
+
+    if(grid){
+      if(positions.length === 0){
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#aaa;">
+          <div style="font-size:2rem;margin-bottom:0.75rem;">📭</div>
+          <div style="font-weight:700;font-size:1.1rem;color:#333;margin-bottom:0.35rem;">No open positions</div>
+          <div style="font-size:0.85rem;">Place your first trade to get started.</div>
+          <button class="btn btn-lime btn-sm" style="margin-top:1rem;" onclick="goDash('orders')">Place a trade →</button>
+        </div>`;
+      } else {
+        grid.innerHTML = positions.map(p => renderPosCard(p)).join('');
+      }
+    }
+
+    if(tbody){
+      if(positions.length === 0){
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:2rem;color:#aaa;">No open positions</td></tr>`;
+      } else {
+        tbody.innerHTML = positions.map(p => {
+          const pl=parseFloat(p.unrealized_pl||0),up=pl>=0;
+          const td=parseFloat(p.change_today||0)*100;
+          return`<tr>
+            <td><span class="tkr">${p.symbol}</span></td>
+            <td>${parseFloat(p.qty).toFixed(p.qty<1?4:0)}</td>
+            <td>$${parseFloat(p.avg_entry_price||0).toFixed(2)}</td>
+            <td id="posPrice_${p.symbol}" style="font-weight:700;">$${parseFloat(p.current_price||0).toFixed(2)}</td>
+            <td style="font-weight:700;">$${parseFloat(p.market_value||0).toFixed(2)}</td>
+            <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+            <td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc||0)*100).toFixed(2)}%</td>
+            <td class="${td>=0?'up':'down'}">${td>=0?'+':''}${td.toFixed(2)}%</td>
+            <td><button class="btn btn-coral btn-sm" onclick="confirmSell('${p.symbol}','${parseFloat(p.qty).toFixed(8)}','${parseFloat(p.market_value||0).toFixed(2)}')">Sell</button></td>
+          </tr>`;
+        }).join('');
+      }
+    }
+
+    // Fetch live prices for all positions
+    if(positions.length > 0){
+      const syms = positions.map(p=>p.symbol);
+      fetchLatestPrices(syms).then(prices=>{
+        for(const [sym, p] of Object.entries(prices)){
+          const el = document.getElementById('posPrice_'+sym);
+          if(el) el.textContent = fmtPrice(p.c);
+        }
+      }).catch(()=>{});
+    }
+
+  } catch(e){
+    console.warn('loadLivePositions error:', e.message);
+    if(badge) badge.innerHTML = '<span style="color:#aaa;">⚠️ Showing demo data</span>';
+  }
+}
+
+// ─── Sell / Close position ────────────────────────────────────
+function confirmSell(symbol, qty, marketValue){
+  const box = document.getElementById('sellConfirmBox');
+  if(!box) return;
+  box.style.display = 'block';
+  box.innerHTML = `<div class="card" style="border-color:rgba(255,59,48,0.3);background:#fff;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Confirm Sell — ${symbol}</h3>
+    <div style="background:#fff8f7;border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;line-height:1.8;">
+      <div style="display:flex;justify-content:space-between;"><span style="color:#888;">Position size</span><strong>${qty} units</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:#888;">Market value</span><strong>$${marketValue}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:#888;">Order type</span><strong>Market sell</strong></div>
+    </div>
+    <div class="g2" style="gap:0.75rem;">
+      <div>
+        <div class="f-lbl">Qty to sell (blank = full)</div>
+        <input class="f-in" id="sellQtyInput" placeholder="${qty}" type="number" min="0.0001" step="0.0001">
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:0.5rem;">
+        <button class="btn btn-coral btn-full" onclick="executeSell('${symbol}')">Confirm Sell</button>
+        <button class="btn btn-outline" onclick="document.getElementById('sellConfirmBox').style.display='none'">Cancel</button>
+      </div>
+    </div>
+    <div id="sellResult" style="display:none;margin-top:0.75rem;"></div>
+  </div>`;
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function executeSell(symbol){
+  const qtyInput = document.getElementById('sellQtyInput')?.value?.trim();
+  const resultEl = document.getElementById('sellResult');
+  if(resultEl) resultEl.style.display='block';
+
+  const body = { symbol, side:'sell', type:'market', time_in_force:'day' };
+  if(qtyInput && parseFloat(qtyInput) > 0) body.qty = qtyInput;
+
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall){
+    if(resultEl) resultEl.innerHTML=`<div style="background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:0.75rem;font-size:0.82rem;color:var(--cg);">✅ Sell order submitted (demo) — no real API call made.</div>`;
+    return;
+  }
+
+  if(resultEl) resultEl.innerHTML='<div style="color:#888;font-size:0.82rem;">⏳ Submitting sell order…</div>';
+
+  try{
+    const res = await fetch(apiURL('/v2/orders'), {
+      method:'POST',
+      headers:{...apiHeaders(),'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(res.ok){
+      if(resultEl) resultEl.innerHTML=`<div style="background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:0.75rem;font-size:0.82rem;">
+        <div style="color:var(--cg);font-weight:700;margin-bottom:0.25rem;">✅ Sell order submitted</div>
+        <div style="font-size:0.78rem;color:#555;">Order ID: ${data.id} · Status: ${data.status}</div>
+      </div>`;
+      showToast('Sell order placed for '+symbol+' ✓','green');
+      setTimeout(()=>{ loadLivePositions(); document.getElementById('sellConfirmBox').style.display='none'; }, 1200);
+    } else {
+      if(resultEl) resultEl.innerHTML=`<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:0.75rem;font-size:0.82rem;color:#FF3B30;">❌ ${data.message||'Sell failed'}</div>`;
+    }
+  } catch(e){
+    if(resultEl) resultEl.innerHTML=`<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:0.75rem;font-size:0.82rem;color:#FF3B30;">❌ ${e.message}</div>`;
+  }
+}
+
+async function closeAllPositions(){
+  if(!confirm('Close ALL open positions? This will submit market sell orders for everything.')) return;
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall){ showToast('Demo mode — no real orders placed','red'); return; }
+  try{
+    const res = await fetch(apiURL('/v2/positions'), { method:'DELETE', headers: apiHeaders() });
+    if(res.ok){
+      const data = await res.json().catch(()=>[]);
+      showToast(`Closing ${Array.isArray(data)?data.length:'all'} position(s)…`,'green');
+      setTimeout(loadLivePositions, 1500);
+    } else {
+      showToast('Error closing positions','red');
+    }
+  } catch(e){ showToast('Error: '+e.message,'red'); }
+}
+
+// ─── Toast notification ───────────────────────────────────────
+function showToast(msg, type='green'){
+  let t = document.getElementById('flexToast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'flexToast';
+    t.style.cssText = 'position:fixed;bottom:2rem;right:2rem;z-index:999;padding:0.85rem 1.5rem;border-radius:12px;font-weight:600;font-size:0.88rem;font-family:var(--f1);transition:all 0.3s;opacity:0;transform:translateY(10px);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.12);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = type==='green' ? 'rgba(0,214,79,0.95)' : 'rgba(255,59,48,0.95)';
+  t.style.color = type==='green' ? '#000' : '#fff';
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(10px)'; }, 3000);
 }
 
 function mockGetOrders(){apiGetOrders();}
