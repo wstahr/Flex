@@ -566,11 +566,14 @@ function pagePortfolio(){
     <h3 style="font-size:1rem;">Holdings</h3>
     <button class="btn btn-outline btn-sm" onclick="goDash('orders')">+ Place Order</button>
   </div>
-  <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unrealised P&L</th><th>Return %</th><th>Today</th></tr></thead><tbody>
+  <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unrealised P&L</th><th>Return %</th><th>Today</th></tr></thead>
   <tbody id="holdingsTbody">
-  </tbody><!-- live -->
-  ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;return`<tr><td><span class="tkr">${p.symbol}</span></td><td>${p.qty}</td><td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td><td>$${parseFloat(p.current_price).toFixed(2)}</td><td>$${parseFloat(p.market_value).toFixed(2)}</td><td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td><td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td><td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td></tr>`;}).join('')}
-  </tbody></table></div>
+    <tr><td colspan="8" style="text-align:center;padding:2.5rem;color:#aaa;">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem;">📊</div>
+      <div>Loading positions…</div>
+    </td></tr>
+  </tbody>
+  </table></div>
 </div>
 <h3 style="margin-bottom:0.75rem;">🔌 API Testers — Account Endpoints</h3>
 <div class="g2" style="gap:1rem;margin-bottom:1rem;">
@@ -772,9 +775,8 @@ return`<div class="card" style="border-color:${up?'rgba(0,230,118,0.2)':'rgba(25
     <h3 style="font-size:1rem;">All Positions</h3>
     <button class="btn btn-coral btn-sm" onclick="mockCloseAll()">Close All Positions</button>
   </div>
-  <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Current</th><th>Value</th><th>P&L</th><th>P&L %</th><th>Today %</th></tr></thead><tbody>
-  <tbody id="holdingsTbody">
-  </tbody><!-- live -->
+  <div class="tbl-w"><table><thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Current</th><th>Value</th><th>P&L</th><th>P&L %</th><th>Today %</th></tr></thead>
+  <tbody id="posPageTbody">
   ${POS.map(p=>{const pl=parseFloat(p.unrealized_pl),up=pl>=0;return`<tr><td><span class="tkr">${p.symbol}</span></td><td>${p.qty}</td><td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td><td>$${parseFloat(p.current_price).toFixed(2)}</td><td>$${parseFloat(p.market_value).toFixed(2)}</td><td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td><td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td><td class="${parseFloat(p.change_today)>=0?'up':'down'}">${(parseFloat(p.change_today)*100).toFixed(2)}%</td></tr>`;}).join('')}
   </tbody></table></div>
 </div>
@@ -1281,7 +1283,9 @@ async function filterAssets(){
       if(symRes.ok){
         const asset = await symRes.json();
         if(asset && asset.symbol){
-          renderAssetsTable([normaliseAsset(asset)]);
+          const norm = normaliseAsset(asset);
+          renderAssetsTable([norm]);
+          fetchAndFillTablePrices([asset.symbol]);
           return;
         }
       }
@@ -1300,7 +1304,10 @@ async function filterAssets(){
             (a.name||'').toLowerCase().includes(ql)
           ).slice(0,20);
           if(filtered.length > 0){
-            renderAssetsTable(filtered.map(normaliseAsset));
+            const normList = filtered.map(normaliseAsset);
+            renderAssetsTable(normList);
+            // Fetch prices in background
+            fetchAndFillTablePrices(normList.map(a=>a.symbol));
             return;
           } else {
             if(tbody) tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:2rem;color:#888;">No results for "${q}"</td></tr>`;
@@ -1359,30 +1366,75 @@ function renderAssetsTable(assets){
   // store for viewAsset lookups
   window._lastAssets = assets;
 }
-function viewAsset(sym, assetObj){
-  // Use passed object if available (live result), else find in mock ASSETS
+async function viewAsset(sym, assetObj){
   const a = assetObj || (window._lastAssets||[]).find(x=>x.symbol===sym) || ASSETS.find(x=>x.symbol===sym);
-  if(!a)return;
-  const el=document.getElementById('assetCard');
-  el.style.display='block';
-  el.className='card';
-  el.style.borderColor='rgba(200,241,53,0.3)';
-  el.innerHTML=`
+  if(!a) return;
+  const el = document.getElementById('assetCard');
+  el.style.display = 'block';
+  el.className = 'card';
+  el.style.borderColor = '#e5e5e0';
+
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+
+  // Render immediately with loading state for price
+  el.innerHTML = `
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
-    <div><span class="tkr" style="font-size:1.5rem;">${a.symbol}</span><div style="color:var(--muted);font-size:0.88rem;">${a.name}</div></div>
-    <div style="text-align:right;"><div style="font-size:1.75rem;font-weight:800;font-family:var(--f2);">${a.price!=null?'$'+parseFloat(a.price).toLocaleString():'<span style=\'font-size:1rem;color:#888;\'>Price via proxy</span>'}</div>${a.change!=null?`<div class="${a.change>=0?'up':'down'}">${a.change>=0?'▲':'▼'} ${Math.abs(a.change)}%</div>`:''}</div>
+    <div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span class="tkr" style="font-size:1.6rem;">${a.symbol}</span>
+        ${a._live?'<span style="font-size:0.68rem;color:var(--cg);font-weight:700;background:rgba(0,214,79,0.08);border:1px solid rgba(0,214,79,0.2);padding:0.1rem 0.5rem;border-radius:100px;">LIVE</span>':''}
+      </div>
+      <div style="color:#888;font-size:0.88rem;margin-top:0.2rem;">${a.name||sym}</div>
+      <div style="display:flex;gap:0.4rem;margin-top:0.6rem;flex-wrap:wrap;">
+        <span class="tag t-grey">${a.exchange||'—'}</span>
+        <span class="tag ${(a.asset_class||'').includes('crypto')?'t-gold':'t-blue'}">${a.asset_class||'equity'}</span>
+        ${a.tradable!==false?'<span class="tag t-green">✓ Tradable</span>':''}
+        ${a.fractionable?'<span class="tag t-purple">Fractional</span>':''}
+      </div>
+    </div>
+    <div style="text-align:right;min-width:140px;">
+      <div id="assetCardPrice" style="font-size:2rem;font-weight:900;font-family:var(--f2);color:#0a0a0a;">
+        ${canCall
+          ? '<span style="font-size:1rem;color:#aaa;font-family:var(--f1);">Loading…</span>'
+          : (a.price!=null ? fmtPrice(a.price) : '<span style="font-size:0.9rem;color:#aaa;">—</span>')}
+      </div>
+      <div id="assetCardChg" style="margin-top:0.2rem;font-size:0.88rem;">
+        ${(!canCall && a.change!=null) ? fmtChg(a.change, a.change) : ''}
+      </div>
+      <div id="assetCardExtra" style="font-size:0.75rem;color:#aaa;margin-top:0.35rem;"></div>
+    </div>
   </div>
-  <div style="display:flex;gap:0.5rem;">
-    <span class="tag t-blue">${a.exchange}</span>
-    <span class="tag ${a.asset_class==='crypto'?'t-gold':'t-blue'}">${a.asset_class}</span>
-    <span class="tag t-green">Tradable</span>
-    ${a.fractionable?'<span class="tag t-purple">Fractional</span>':''}
-  </div>
-  <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-    <button class="btn btn-lime btn-sm" onclick="goDash('orders');setTimeout(()=>{document.getElementById('oSym')&&(document.getElementById('oSym').value='${a.symbol}')},200)">Buy ${a.symbol}</button>
-    <button class="btn btn-outline btn-sm" onclick="document.getElementById('assetCard').style.display='none'">Close</button>
+  <div style="border-top:1px solid #f0f0ee;padding-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+    <button class="btn btn-lime btn-sm" onclick="goDash('orders');setTimeout(()=>{const el=document.getElementById('oSym');if(el){el.value='${sym}';previewOrder();}},200)">
+      Buy ${sym}
+    </button>
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('assetCard').style.display='none'">
+      Close
+    </button>
   </div>`;
-  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  // Fetch live price in background
+  if(canCall){
+    try{
+      const prices = await fetchLatestPrices([sym]);
+      const p = prices[sym];
+      const priceEl = document.getElementById('assetCardPrice');
+      const chgEl   = document.getElementById('assetCardChg');
+      const extraEl = document.getElementById('assetCardExtra');
+      if(p && priceEl){
+        priceEl.textContent = fmtPrice(p.c);
+        if(chgEl)   chgEl.innerHTML  = fmtChg(p.chg, p.chgPct);
+        if(extraEl) extraEl.innerHTML = `H: ${fmtPrice(p.h)} · L: ${fmtPrice(p.l)} · Vol: ${p.v?.toLocaleString()||'—'}`;
+      } else if(priceEl){
+        priceEl.innerHTML = '<span style="font-size:0.85rem;color:#aaa;">No price data</span>';
+      }
+    } catch(e){
+      const priceEl = document.getElementById('assetCardPrice');
+      if(priceEl) priceEl.innerHTML = '<span style="font-size:0.85rem;color:#aaa;">Price unavailable</span>';
+    }
+  }
 }
 async function mockGetAssets(){
   const s=document.getElementById('assetStatus')?.value||'active';
@@ -1745,7 +1797,27 @@ async function pingAPI(){
 // ─── Live Portfolio Data Loader ───────────────────────────────
 async function loadLivePortfolio(){
   const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
-  if(!canCall) return; // no creds — stay on mock data
+  if(!canCall){
+    // No credentials — immediately render mock data
+    const tbody = document.getElementById('holdingsTbody');
+    if(tbody) tbody.innerHTML = POS.map(p => {
+      const pl=parseFloat(p.unrealized_pl),up=pl>=0,td=parseFloat(p.change_today)*100;
+      return `<tr>
+        <td><span class="tkr">${p.symbol}</span></td>
+        <td>${p.qty}</td>
+        <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
+        <td>$${parseFloat(p.current_price).toFixed(2)}</td>
+        <td style="font-weight:700;">$${parseFloat(p.market_value).toFixed(2)}</td>
+        <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+        <td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td>
+        <td class="${td>=0?'up':'down'}">${td>=0?'+':''}${td.toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+    drawAllocChart(null);
+    const badge = document.getElementById('liveDataBadge');
+    if(badge) badge.innerHTML = '<span style="font-size:0.72rem;color:#aaa;">Demo mode — connect API for live data</span>';
+    return;
+  }
 
   // Helper: update a DOM element safely
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.innerHTML=val; };
@@ -1812,41 +1884,79 @@ async function loadLivePortfolio(){
 
       // ── Update holdings table ───────────────────────────────
       const tbody = document.getElementById('holdingsTbody');
-      if(tbody && positions.length > 0){
-        tbody.innerHTML = positions.map(p => {
-          const pl    = parseFloat(p.unrealized_pl||0);
-          const plpct = parseFloat(p.unrealized_plpc||0)*100;
-          const td    = parseFloat(p.change_today||0)*100;
-          const up    = pl >= 0;
-          const tdup  = td >= 0;
-          return `<tr>
-            <td><span class="tkr">${p.symbol}</span><div style="font-size:0.72rem;color:var(--lmuted);">${p.asset_class||'equity'}</div></td>
-            <td>${parseFloat(p.qty).toFixed(p.qty<1?4:0)}</td>
-            <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
-            <td>$${parseFloat(p.current_price).toFixed(2)}</td>
-            <td style="font-weight:600;">$${parseFloat(p.market_value).toFixed(2)}</td>
-            <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
-            <td class="${up?'up':'down'}">${plpct.toFixed(2)}%</td>
-            <td class="${tdup?'up':'down'}">${tdup?'+':''}${td.toFixed(2)}%</td>
-          </tr>`;
-        }).join('');
-      } else if(tbody){
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lmuted);padding:2rem;">No open positions</td></tr>';
+      if(tbody){
+        if(positions.length > 0){
+          // Real positions — replace everything
+          tbody.innerHTML = positions.map(p => {
+            const pl    = parseFloat(p.unrealized_pl||0);
+            const plpct = parseFloat(p.unrealized_plpc||0)*100;
+            const td    = parseFloat(p.change_today||0)*100;
+            const up    = pl >= 0;
+            const tdup  = td >= 0;
+            return `<tr>
+              <td><span class="tkr">${p.symbol}</span><div style="font-size:0.72rem;color:#aaa;">${p.asset_class||'equity'}</div></td>
+              <td>${parseFloat(p.qty).toFixed(p.qty<1?4:0)}</td>
+              <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
+              <td>$${parseFloat(p.current_price).toFixed(2)}</td>
+              <td style="font-weight:700;color:#111;">$${parseFloat(p.market_value).toFixed(2)}</td>
+              <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+              <td class="${up?'up':'down'}">${plpct.toFixed(2)}%</td>
+              <td class="${tdup?'up':'down'}">${tdup?'+':''}${td.toFixed(2)}%</td>
+            </tr>`;
+          }).join('');
+          // Refresh Current price column with live market data
+          if(positions.length > 0){
+            const syms = positions.map(p=>p.symbol);
+            fetchLatestPrices(syms).then(prices => {
+              const rows = document.querySelectorAll('#holdingsTbody tr');
+              rows.forEach(row => {
+                const tkrEl = row.querySelector('.tkr');
+                if(!tkrEl) return;
+                const sym = tkrEl.textContent.trim();
+                const p = prices[sym];
+                if(!p) return;
+                const cells = row.querySelectorAll('td');
+                // Current price = 3rd td (index 3)
+                if(cells[3]){
+                  const up = p.chg >= 0;
+                  cells[3].innerHTML = `<span style="font-weight:700;">${fmtPrice(p.c)}</span>
+                    <div style="font-size:0.7rem;${up?'color:#00a050':'color:#cc3333'};">${up?'▲':'▼'} ${Math.abs(p.chgPct).toFixed(2)}%</div>`;
+                }
+              });
+            }).catch(()=>{});
+          }
+        } else {
+          // Connected but zero positions — show clean empty state, NO mock data
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:3rem;">
+            <div style="font-size:1.75rem;margin-bottom:0.75rem;">📭</div>
+            <div style="font-weight:700;color:#333;margin-bottom:0.35rem;">No open positions</div>
+            <div style="font-size:0.82rem;color:#aaa;">Place your first trade in the Orders tab to get started.</div>
+            <button class="btn btn-lime btn-sm" style="margin-top:1rem;" onclick="goDash('orders')">Place a trade →</button>
+          </td></tr>`;
+        }
       }
 
       // ── Update allocation chart with real data ─────────────
       if(positions.length > 0){
-        const colors = ALLOC_COLORS;
-        const total  = positions.reduce((s,p)=>s+parseFloat(p.market_value||0),0);
-        const legend = document.getElementById('allocLegend');
-        if(legend) legend.innerHTML = positions.slice(0,7).map((p,i)=>`
-          <span style="display:flex;align-items:center;gap:0.35rem;font-size:0.75rem;color:var(--ltext);">
-            <span style="width:10px;height:10px;border-radius:3px;background:${colors[i%colors.length]};flex-shrink:0;"></span>
-            ${p.symbol} ${((parseFloat(p.market_value)/total)*100).toFixed(0)}%
-          </span>`).join('');
-
-        // Redraw alloc chart with live position data
+        // Redraw alloc chart — drawAllocChart handles legend too
         drawAllocChart(positions.slice(0,8));
+      } else {
+        // No positions — show empty ring
+        const canvas = document.getElementById('allocChart');
+        const legend = document.getElementById('allocLegend');
+        if(canvas){
+          const ctx=canvas.getContext('2d');
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+          ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+          ctx.strokeStyle='#e5e5e0'; ctx.lineWidth=12; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
+          ctx.fillStyle='#fff'; ctx.fill();
+          ctx.font='500 11px Inter,sans-serif';
+          ctx.fillStyle='#aaa'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('No positions', cx, cy);
+        }
+        if(legend) legend.innerHTML='<span style="font-size:0.78rem;color:#aaa;">No open positions yet</span>';
       }
     }
 
@@ -1857,8 +1967,117 @@ async function loadLivePortfolio(){
   } catch(err){
     console.warn('Live portfolio load error:', err.message);
     const badge = document.getElementById('liveDataBadge');
-    if(badge) badge.innerHTML = `<span style="font-size:0.72rem;color:var(--lmuted);">⚠️ Could not load live data — showing mock</span>`;
+    if(badge) badge.innerHTML = `<span style="font-size:0.72rem;color:#aaa;">⚠️ Could not load live data — showing mock</span>`;
+    // Restore mock holdings so the table isn't empty
+    const tbody = document.getElementById('holdingsTbody');
+    if(tbody && tbody.querySelector('[colspan]')){
+      tbody.innerHTML = POS.map(p => {
+        const pl=parseFloat(p.unrealized_pl),up=pl>=0,td=parseFloat(p.change_today)*100;
+        return `<tr>
+          <td><span class="tkr">${p.symbol}</span></td>
+          <td>${p.qty}</td>
+          <td>$${parseFloat(p.avg_entry_price).toFixed(2)}</td>
+          <td>$${parseFloat(p.current_price).toFixed(2)}</td>
+          <td style="font-weight:700;">$${parseFloat(p.market_value).toFixed(2)}</td>
+          <td class="${up?'up':'down'}">${up?'+':''}$${pl.toFixed(2)}</td>
+          <td class="${up?'up':'down'}">${(parseFloat(p.unrealized_plpc)*100).toFixed(2)}%</td>
+          <td class="${td>=0?'up':'down'}">${td>=0?'+':''}${td.toFixed(2)}%</td>
+        </tr>`;
+      }).join('');
+      // Also restore mock alloc chart
+      drawAllocChart(null);
+    }
   }
+}
+
+
+// ─── Market Data helpers ──────────────────────────────────────
+// Fetch latest bar for one or many symbols via data.alpaca.markets
+// Returns { AAPL: {c:193.42, o:191.00, chg:1.25, chgPct:0.65}, ... }
+async function fetchLatestPrices(symbols){
+  if(!symbols || symbols.length === 0) return {};
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall) return {};
+
+  // Separate equity symbols from crypto (different endpoints)
+  const equitySyms  = symbols.filter(s => !s.includes('/'));
+  const cryptoSyms  = symbols.filter(s => s.includes('/'));
+  const prices = {};
+
+  // ── Equity: /v2/stocks/bars/latest ───────────────────────────
+  if(equitySyms.length > 0){
+    try{
+      const symsParam = equitySyms.map(encodeURIComponent).join(',');
+      const url = dataURL('/v2/stocks/bars/latest?symbols='+symsParam+'&feed=iex');
+      const res = await fetch(url, { headers: apiHeaders() });
+      if(res.ok){
+        const data = await res.json();
+        const bars = data.bars || {};
+        for(const [sym, bar] of Object.entries(bars)){
+          const chg    = bar.c - bar.o;
+          const chgPct = bar.o > 0 ? (chg/bar.o)*100 : 0;
+          prices[sym] = { c: bar.c, o: bar.o, h: bar.h, l: bar.l,
+                          v: bar.v, chg, chgPct };
+        }
+      }
+    } catch(e){ console.warn('Equity price fetch error:', e.message); }
+  }
+
+  // ── Crypto: /v1beta3/crypto/us/latest/bars ───────────────────
+  if(cryptoSyms.length > 0){
+    try{
+      const symsParam = cryptoSyms.map(encodeURIComponent).join(',');
+      const url = dataURL('/v1beta3/crypto/us/latest/bars?symbols='+symsParam);
+      const res = await fetch(url, { headers: apiHeaders() });
+      if(res.ok){
+        const data = await res.json();
+        const bars = data.bars || {};
+        for(const [sym, bar] of Object.entries(bars)){
+          const chg    = bar.c - bar.o;
+          const chgPct = bar.o > 0 ? (chg/bar.o)*100 : 0;
+          prices[sym] = { c: bar.c, o: bar.o, h: bar.h, l: bar.l,
+                          v: bar.v, chg, chgPct };
+        }
+      }
+    } catch(e){ console.warn('Crypto price fetch error:', e.message); }
+  }
+
+  return prices;
+}
+
+function fmtPrice(n){
+  if(n == null) return '—';
+  if(n >= 1000) return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return '$'+parseFloat(n).toFixed(2);
+}
+function fmtChg(chg, pct){
+  if(chg == null) return '<span style="color:#aaa;">—</span>';
+  const up = chg >= 0;
+  const clr = up ? '#00a050' : '#cc3333';
+  return `<span style="color:${clr};font-weight:600;">${up?'▲':'▼'} ${Math.abs(pct).toFixed(2)}%</span>`;
+}
+
+
+// Fetch prices for symbols and fill price/change cells in assetsTbody
+async function fetchAndFillTablePrices(symbols){
+  if(!symbols || symbols.length === 0) return;
+  try{
+    const prices = await fetchLatestPrices(symbols);
+    const tbody = document.getElementById('assetsTbody');
+    if(!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+      const tkrEl = row.querySelector('.tkr');
+      if(!tkrEl) return;
+      const sym = tkrEl.textContent.trim();
+      const p = prices[sym];
+      if(!p) return;
+      // Price cell = 5th td (index 4), Change = 6th td (index 5)
+      const cells = row.querySelectorAll('td');
+      if(cells[4]) cells[4].innerHTML = `<span style="font-family:var(--f2);font-weight:700;">${fmtPrice(p.c)}</span>`;
+      if(cells[5]) cells[5].innerHTML = fmtChg(p.chg, p.chgPct);
+    });
+  } catch(e){ console.warn('fetchAndFillTablePrices error:', e.message); }
 }
 
 function mockGetOrders(){apiGetOrders();}
