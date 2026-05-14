@@ -51,6 +51,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(247,247,245,
 .sb-item:hover{background:#f2f2ef;color:#111;}
 .sb-item.active{background:#f2f2ef;color:#0a0a0a;font-weight:700;}
 .sb-item.active span:first-child{color:var(--cg);}
+.sb-item.locked{opacity:0.38;position:relative;}
+.sb-item.locked::after{content:'🔒';font-size:0.65rem;position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);}
+.sb-item.locked:hover{background:rgba(255,59,48,0.04);color:#999;}
+.mn-item.locked{opacity:0.4;position:relative;}
+.mn-item.locked .mn-icon::after{content:'🔒';font-size:0.5rem;position:absolute;bottom:-2px;right:-4px;}
+.mn-item.locked .mn-icon{position:relative;display:inline-block;}
 .main{flex:1;padding:2.5rem;overflow-y:auto;background:#f7f7f5;}
 
 /* BUTTONS */
@@ -347,6 +353,11 @@ tr:hover td{background:#fafaf8;}
   .stat-c .s-val{font-size:1.5rem;}
 }
 
+
+.news-pill{background:#f5f5f3;border:1px solid #e5e5e0;border-radius:100px;padding:0.35rem 1rem;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:var(--f1);color:#666;transition:all 0.15s;}
+.news-pill:hover{background:#0a0a0a;color:#fff;border-color:#0a0a0a;}
+.news-pill.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a;}
+.news-card:hover{border-color:#0a0a0a !important;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
 </style>
 </head>
 <body>
@@ -542,23 +553,27 @@ tr:hover td{background:#fafaf8;}
     <aside class="sidebar">
       <div class="sb-section">
         <div class="sb-label">Dashboard</div>
+        <div class="sb-item" id="sb-tips" onclick="goDash('tips')"><span>💡</span> Wealth Tips</div>
+        <div class="sb-item" id="sb-trading101" onclick="goDash('trading101')"><span>📚</span> Trading 101</div>
+        <div class="sb-item" id="sb-news" onclick="goDash('news')"><span>📰</span> Market News</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label" style="display:flex;align-items:center;gap:0.4rem;">
+          With Alpaca
+          <span id="sb-alpaca-status" style="font-size:0.55rem;padding:0.1rem 0.45rem;border-radius:100px;background:#f0f0ee;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">not connected</span>
+        </div>
         <div class="sb-item active" id="sb-portfolio" onclick="goDash('portfolio')"><span>📊</span> Portfolio</div>
         <div class="sb-item" id="sb-research" onclick="goDash('research')"><span>🔍</span> Research</div>
         <div class="sb-item" id="sb-orders" onclick="goDash('orders')"><span>📋</span> Orders</div>
         <div class="sb-item" id="sb-positions" onclick="goDash('positions')"><span>📌</span> Positions</div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-label">Learn</div>
-        <div class="sb-item" id="sb-tips" onclick="goDash('tips')"><span>💡</span> Wealth Tips</div>
-        <div class="sb-item" id="sb-trading101" onclick="goDash('trading101')"><span>📚</span> Trading 101</div>
-      </div>
-      <div class="sb-section">
-        <div class="sb-label">Account</div>
         <div class="sb-item" id="sb-kyc" onclick="goDash('kyc')"><span>🪪</span> KYC / Verify <span class="notif"></span></div>
         <div class="sb-item" id="sb-settings" onclick="goDash('settings')"><span>⚙️</span> API Settings</div>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;">
-        <div style="font-size:0.72rem;color:var(--muted);padding:0 0.5rem;line-height:1.6;">🔒 Paper Trading Mode<br><span style="color:var(--green);">● Mock Connected</span></div>
+      <div style="border-top:1px solid #f0f0ee;padding-top:1rem;margin-top:0.5rem;">
+        <div id="sb-conn-status" style="font-size:0.72rem;color:#aaa;padding:0 0.5rem;line-height:1.8;">
+          <span style="color:#aaa;">● Not connected</span><br>
+          <span style="font-size:0.68rem;">Add API keys or tunnel<br>to enable trading.</span>
+        </div>
       </div>
     </aside>
     <main class="main" id="dashMain"></main>
@@ -567,6 +582,16 @@ tr:hover td{background:#fafaf8;}
   <!-- ── Mobile bottom nav bar ──────────────────────────────── -->
   <nav id="mobileNav">
     <div class="mn-items">
+      <button class="mn-item" id="mn-tips" onclick="goDash('tips');setMobileActive('tips')">
+        <span class="mn-icon">💡</span>
+        <span>Tips</span>
+        <span class="mn-icon-dot" style="display:none;"></span>
+      </button>
+      <button class="mn-item" id="mn-news" onclick="goDash('news');setMobileActive('news')">
+        <span class="mn-icon">📰</span>
+        <span>News</span>
+        <span class="mn-icon-dot" style="display:none;"></span>
+      </button>
       <button class="mn-item active" id="mn-portfolio" onclick="goDash('portfolio');setMobileActive('portfolio')">
         <span class="mn-icon">📊</span>
         <span>Portfolio</span>
@@ -575,16 +600,6 @@ tr:hover td{background:#fafaf8;}
       <button class="mn-item" id="mn-orders" onclick="goDash('orders');setMobileActive('orders')">
         <span class="mn-icon">📋</span>
         <span>Orders</span>
-        <span class="mn-icon-dot" style="display:none;"></span>
-      </button>
-      <button class="mn-item" id="mn-positions" onclick="goDash('positions');setMobileActive('positions')">
-        <span class="mn-icon">📌</span>
-        <span>Positions</span>
-        <span class="mn-icon-dot" style="display:none;"></span>
-      </button>
-      <button class="mn-item" id="mn-research" onclick="goDash('research');setMobileActive('research')">
-        <span class="mn-icon">🔍</span>
-        <span>Research</span>
         <span class="mn-icon-dot" style="display:none;"></span>
       </button>
       <button class="mn-item" id="mn-more" onclick="openMobileDrawer()">
@@ -604,18 +619,26 @@ tr:hover td{background:#fafaf8;}
         <div style="font-family:var(--f2);font-size:1.1rem;font-weight:900;color:#0a0a0a;margin-bottom:0.25rem;">Flex</div>
         <div id="drawerCredStatus" style="font-size:0.75rem;color:#888;">Loading…</div>
       </div>
+
       <div style="margin-bottom:0.5rem;">
-        <div style="font-size:0.68rem;font-weight:700;color:#bbb;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;padding:0 0.25rem;">Learn</div>
+        <div style="font-size:0.68rem;font-weight:700;color:#bbb;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;padding:0 0.25rem;">Dashboard</div>
         <button class="sb-item" style="width:100%;" onclick="goDash('tips');setMobileActive('tips');closeMobileDrawer()"><span>💡</span> Wealth Tips</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('trading101');setMobileActive('trading101');closeMobileDrawer()"><span>📚</span> Trading 101</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('news');setMobileActive('news');closeMobileDrawer()"><span>📰</span> Market News</button>
       </div>
-      <div style="margin-bottom:0.5rem;">
-        <div style="font-size:0.68rem;font-weight:700;color:#bbb;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;padding:0 0.25rem;margin-top:1rem;">Account</div>
+
+      <div style="margin-bottom:0.5rem;margin-top:1rem;">
+        <div style="font-size:0.68rem;font-weight:700;color:#bbb;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;padding:0 0.25rem;">With Alpaca</div>
+        <button class="sb-item" id="drawer-portfolio" style="width:100%;" onclick="goDash('portfolio');setMobileActive('portfolio');closeMobileDrawer()"><span>📊</span> Portfolio</button>
+        <button class="sb-item" id="drawer-research" style="width:100%;" onclick="goDash('research');setMobileActive('research');closeMobileDrawer()"><span>🔍</span> Research</button>
+        <button class="sb-item" id="drawer-orders" style="width:100%;" onclick="goDash('orders');setMobileActive('orders');closeMobileDrawer()"><span>📋</span> Orders</button>
+        <button class="sb-item" id="drawer-positions" style="width:100%;" onclick="goDash('positions');setMobileActive('positions');closeMobileDrawer()"><span>📌</span> Positions</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('kyc');setMobileActive('kyc');closeMobileDrawer()"><span>🪪</span> KYC / Verify</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('settings');setMobileActive('settings');closeMobileDrawer()"><span>⚙️</span> API Settings</button>
       </div>
-      <div style="margin-top:auto;padding-top:2rem;border-top:1px solid #f0f0ee;">
-        <button class="btn btn-outline btn-full btn-sm" onclick="goLanding();closeMobileDrawer()" style="margin-top:0.5rem;">← Back to Home</button>
+
+      <div style="margin-top:auto;padding-top:1.5rem;border-top:1px solid #f0f0ee;">
+        <button class="btn btn-outline btn-full btn-sm" onclick="goLanding();closeMobileDrawer()">← Back to Home</button>
       </div>
     </div>
   </div>
@@ -632,6 +655,7 @@ function saveKey(field, val) {
   if (field === 'env') CREDS.env = val;
   if (field === 'proxy') CREDS.proxyUrl = val.replace(/\/+$/, ''); // strip trailing slash
   updateNavCredStatus();
+  updateNavLockState();
 }
 function getProxyUrl() { return CREDS.proxyUrl; }
 
@@ -648,6 +672,7 @@ function updateNavCredStatus() {
 }
 
 function populateCredFields() {
+  updateNavLockState();
   // Populate any credential inputs that exist on the current page
   const fields = [
     ['apiKey', CREDS.key],
@@ -705,7 +730,8 @@ function goDash(tab){
   const sb=document.getElementById('sb-'+tab);
   if(sb)sb.classList.add('active');
   setMobileActive(tab);
-  const pages={portfolio:pagePortfolio,research:pageResearch,orders:pageOrders,positions:pagePositions,tips:pageTips,trading101:pageTrade101,kyc:pageKYC,settings:pageSettings};
+  updateNavLockState();
+  const pages={portfolio:pagePortfolio,research:pageResearch,orders:pageOrders,positions:pagePositions,tips:pageTips,trading101:pageTrade101,kyc:pageKYC,settings:pageSettings,news:pageNews};
   document.getElementById('dashMain').innerHTML=pages[tab]?pages[tab]():'';
   initPage(tab);
   window.scrollTo(0,0);
@@ -2720,7 +2746,7 @@ function showToast(msg, type='green'){
 // ─── Mobile nav helpers ───────────────────────────────────────
 function setMobileActive(tab){
   // Update bottom nav active states
-  const bottomTabs = ['portfolio','orders','positions','research'];
+  const bottomTabs = ['portfolio','orders','tips','news'];
   bottomTabs.forEach(t => {
     const el = document.getElementById('mn-'+t);
     if(!el) return;
@@ -2782,6 +2808,269 @@ window.addEventListener('resize', () => {
     }
   }, 150);
 });
+
+
+// ─── Update nav lock state based on creds ────────────────────
+// Portfolio, Orders, Positions are locked until API configured
+const API_REQUIRED_TABS = ['portfolio','orders','positions'];
+
+function updateNavLockState(){
+  const connected = !!(CREDS.proxyUrl || CREDS.key);
+
+  // Sidebar items
+  API_REQUIRED_TABS.forEach(tab => {
+    const el = document.getElementById('sb-'+tab);
+    if(!el) return;
+    if(connected){
+      el.classList.remove('locked');
+      el.title = '';
+    } else {
+      el.classList.add('locked');
+      el.title = 'Add API keys or Tunnel URL in API Settings to unlock';
+    }
+  });
+
+  // Drawer items
+  ['portfolio','research','orders','positions'].forEach(tab => {
+    const el = document.getElementById('drawer-'+tab);
+    if(!el) return;
+    const needsApi = API_REQUIRED_TABS.includes(tab);
+    if(needsApi && !connected){
+      el.classList.add('locked');
+      el.title = 'Requires API connection';
+    } else {
+      el.classList.remove('locked');
+      el.title = '';
+    }
+  });
+
+  // Mobile bottom nav
+  ['mn-portfolio','mn-orders'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(!connected) el.classList.add('locked');
+    else el.classList.remove('locked');
+  });
+
+  // Sidebar status badge
+  const badge = document.getElementById('sb-alpaca-status');
+  const connStatus = document.getElementById('sb-conn-status');
+  if(badge){
+    if(CREDS.proxyUrl){
+      badge.textContent = '🔀 tunnel';
+      badge.style.background = 'rgba(0,214,79,0.1)';
+      badge.style.color = 'var(--cg)';
+    } else if(CREDS.key){
+      badge.textContent = '🔑 keys';
+      badge.style.background = 'rgba(0,214,79,0.1)';
+      badge.style.color = 'var(--cg)';
+    } else {
+      badge.textContent = 'not connected';
+      badge.style.background = '#f0f0ee';
+      badge.style.color = '#aaa';
+    }
+  }
+  if(connStatus){
+    if(CREDS.proxyUrl){
+      connStatus.innerHTML = '<span style="color:var(--cg);">● Tunnel active</span><br><span style="font-size:0.68rem;color:#aaa;">All features unlocked</span>';
+    } else if(CREDS.key){
+      connStatus.innerHTML = '<span style="color:#00a050;">● API keys saved</span><br><span style="font-size:0.68rem;color:#aaa;">All features unlocked</span>';
+    } else {
+      connStatus.innerHTML = '<span style="color:#aaa;">● Not connected</span><br><span style="font-size:0.68rem;color:#aaa;">Add keys in API Settings<br>to unlock trading.</span>';
+    }
+  }
+}
+
+
+// ─── NEWS PAGE ────────────────────────────────────────────────
+function pageNews(){
+  return`${apiStatusBanner()}
+<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div><h1 class="pt">Market News</h1><p class="ps">What's moving markets today</p></div>
+  <span style="font-size:0.72rem;color:#aaa;padding-top:0.35rem;">Updated ${new Date().toLocaleTimeString()}</span>
+</div>
+
+<!-- Breaking banner -->
+<div style="background:#0a0a0a;border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">
+  <span style="background:#FF3B30;color:#fff;font-size:0.65rem;font-weight:900;padding:0.2rem 0.6rem;border-radius:4px;letter-spacing:0.08em;flex-shrink:0;">BREAKING</span>
+  <span style="color:#fff;font-size:0.88rem;font-weight:600;">Horzion AI announces $40B compute deal — shares of cloud infrastructure stocks surge in after-hours trading</span>
+</div>
+
+<!-- Category pills -->
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;" id="newsCatPills">
+  <button class="news-pill active" onclick="filterNews(this,'all')">All</button>
+  <button class="news-pill" onclick="filterNews(this,'tech')">Tech</button>
+  <button class="news-pill" onclick="filterNews(this,'energy')">Energy</button>
+  <button class="news-pill" onclick="filterNews(this,'finance')">Finance</button>
+  <button class="news-pill" onclick="filterNews(this,'crypto')">Crypto</button>
+  <button class="news-pill" onclick="filterNews(this,'macro')">Macro</button>
+</div>
+
+<!-- News grid -->
+<div id="newsGrid" class="g2" style="gap:1rem;margin-bottom:2rem;">
+${NEWS_ITEMS.map(n => renderNewsCard(n)).join('')}
+</div>
+
+<!-- Market movers strip -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Today's Movers</h3>
+  <div style="overflow-x:auto;">
+    <div style="display:flex;gap:0.75rem;min-width:max-content;padding-bottom:0.25rem;">
+      ${MOVERS.map(m=>{
+        const up=m.chg>=0;
+        const bg=up?'rgba(0,214,79,0.06)':'rgba(255,59,48,0.06)';
+        const br=up?'rgba(0,214,79,0.15)':'rgba(255,59,48,0.15)';
+        const cc=up?'#00a050':'#FF3B30';
+        return '<div style="background:'+bg+';border:1px solid '+br+';border-radius:14px;padding:0.9rem 1.1rem;min-width:130px;">'
+          +'<div style="font-family:var(--f2);font-weight:900;font-size:1rem;color:#111;">'+m.sym+'</div>'
+          +'<div style="font-size:0.8rem;color:#888;margin:0.1rem 0;">'+m.name+'</div>'
+          +'<div style="font-family:var(--f2);font-weight:700;font-size:1rem;">$'+m.price+'</div>'
+          +'<div style="font-size:0.8rem;font-weight:700;color:'+cc+';">'+(up?'▲':'▼')+' '+Math.abs(m.chg)+'%</div>'
+          +'</div>';
+      }).join('')}
+    </div>
+  </div>
+</div>
+`;
+}
+
+// News data — real events with fictional company names/tickers
+const NEWS_ITEMS = [
+  {
+    id:1, cat:'tech',
+    ticker:'HRZN', company:'Horizon AI',
+    headline:'Horizon AI lands $40B cloud compute deal with three major banks',
+    summary:'The artificial intelligence infrastructure firm signed a landmark multi-year agreement to power AI workloads for Meridian Bank, Pacific Trust, and Coastal Financial. HRZN shares jumped 14% in extended trading.',
+    time:'2 min ago', sentiment:'bullish', chg:'+14.2%', img:'🤖'
+  },
+  {
+    id:2, cat:'tech',
+    ticker:'NVDA', company:'NVIDIA Corp.',
+    headline:'NVIDIA beats Q2 estimates — data centre revenue up 122% YoY',
+    summary:'The chipmaker reported earnings of $6.12 per share against analyst expectations of $5.80. CEO cited "unprecedented demand" for Blackwell architecture chips across hyperscalers.',
+    time:'18 min ago', sentiment:'bullish', chg:'+8.1%', img:'💚'
+  },
+  {
+    id:3, cat:'finance',
+    ticker:'PCFC', company:'Pacific Capital Finance',
+    headline:'Pacific Capital raises rates on margin lending amid volatility',
+    summary:'The mid-tier brokerage announced a 75bps increase on margin rates effective next Monday, citing rising short-term funding costs. Analysts say the move could pressure leveraged retail traders.',
+    time:'34 min ago', sentiment:'bearish', chg:'-2.3%', img:'🏦'
+  },
+  {
+    id:4, cat:'crypto',
+    ticker:'BTC', company:'Bitcoin',
+    headline:'Bitcoin breaks $72,000 as ETF inflows hit record $2.1B in a single day',
+    summary:'Spot Bitcoin ETFs recorded their highest-ever single-day inflows as institutional allocators increased exposure ahead of the next halving cycle. On-chain data shows long-term holder accumulation at multi-month highs.',
+    time:'51 min ago', sentiment:'bullish', chg:'+6.8%', img:'₿'
+  },
+  {
+    id:5, cat:'energy',
+    ticker:'SOLX', company:'Solaris Energy',
+    headline:'Solaris Energy wins $8B federal contract for grid-scale battery storage',
+    summary:'The renewable energy company was awarded a Department of Energy contract to deploy 12GWh of battery storage across five states. This doubles Solaris&#x27;s current backlog and pushes their 2026 revenue guidance up 40%.',
+    time:'1 hr ago', sentiment:'bullish', chg:'+11.5%', img:'⚡'
+  },
+  {
+    id:6, cat:'macro',
+    ticker:'SPY', company:'S&P 500',
+    headline:'Fed signals two more rate cuts in 2026 — markets rally broadly',
+    summary:'Federal Reserve minutes released today indicate the committee is "increasingly confident" inflation is returning to target. The 10-year Treasury yield fell 12bps and growth stocks led a broad market advance.',
+    time:'1 hr ago', sentiment:'bullish', chg:'+1.4%', img:'🏛️'
+  },
+  {
+    id:7, cat:'tech',
+    ticker:'APXL', company:'Apex Logic',
+    headline:'Apex Logic slashes workforce by 18% — stock drops on revenue warning',
+    summary:'The enterprise software company said weak enterprise spending is forcing a restructuring. Q3 revenue guidance was cut from $2.1B to $1.6B. This is the third consecutive quarter of guidance reductions.',
+    time:'2 hr ago', sentiment:'bearish', chg:'-9.7%', img:'📉'
+  },
+  {
+    id:8, cat:'finance',
+    ticker:'MTRO', company:'Metro Financial',
+    headline:'Metro Financial announces $3B share buyback program',
+    summary:'The regional bank announced a massive capital return program after passing its stress test with record margins. The buyback represents approximately 12% of the company&#x27;s current market capitalisation.',
+    time:'3 hr ago', sentiment:'bullish', chg:'+4.2%', img:'💰'
+  },
+  {
+    id:9, cat:'crypto',
+    ticker:'ETH', company:'Ethereum',
+    headline:'Ethereum staking yield rises to 5.8% — institutional validators surge',
+    summary:'The shift toward proof-of-stake continues to attract institutional capital. Three major pension funds disclosed ETH validator positions this week totalling over $900M, pushing staking participation to an all-time high.',
+    time:'4 hr ago', sentiment:'bullish', chg:'+4.1%', img:'🔷'
+  },
+  {
+    id:10, cat:'energy',
+    ticker:'CRVX', company:'Cervex Oil & Gas',
+    headline:'Cervex strikes major offshore deposit — analysts upgrade to buy',
+    summary:'The exploration company confirmed a commercially viable offshore find estimated at 400M barrels. Four major brokerages upgraded CRVX overnight, with price targets ranging from $68 to $85 versus the current $54.',
+    time:'5 hr ago', sentiment:'bullish', chg:'+18.3%', img:'🛢️'
+  },
+  {
+    id:11, cat:'macro',
+    ticker:'DXY', company:'US Dollar Index',
+    headline:'Dollar weakens as trade deficit narrows less than expected',
+    summary:'The US trade deficit came in at $68.2B versus $64.5B expected, sending the dollar lower against major currencies. The miss complicates the Fed&#x27;s narrative around export competitiveness.',
+    time:'6 hr ago', sentiment:'neutral', chg:'-0.4%', img:'💵'
+  },
+  {
+    id:12, cat:'tech',
+    ticker:'QNTM', company:'Quantum Nexus',
+    headline:'Quantum Nexus achieves 1,000-qubit milestone — rivals take note',
+    summary:'The quantum computing startup demonstrated a stable 1,024-qubit processor running error-corrected algorithms. IBM and Google shares dipped slightly as investors assessed the competitive implications.',
+    time:'7 hr ago', sentiment:'bullish', chg:'+22.1%', img:'⚛️'
+  },
+];
+
+const MOVERS = [
+  {sym:'QNTM',name:'Quantum Nexus',price:'41.20',chg:22.1},
+  {sym:'CRVX',name:'Cervex O&G',price:'63.80',chg:18.3},
+  {sym:'HRZN',name:'Horizon AI',price:'187.40',chg:14.2},
+  {sym:'SOLX',name:'Solaris Energy',price:'94.60',chg:11.5},
+  {sym:'NVDA',name:'NVIDIA',price:'875.20',chg:8.1},
+  {sym:'BTC',name:'Bitcoin',price:'72,140',chg:6.8},
+  {sym:'ETH',name:'Ethereum',price:'3,940',chg:4.1},
+  {sym:'MTRO',name:'Metro Financial',price:'68.30',chg:4.2},
+  {sym:'APXL',name:'Apex Logic',price:'28.40',chg:-9.7},
+  {sym:'PCFC',name:'Pacific Capital',price:'44.10',chg:-2.3},
+];
+
+function renderNewsCard(n){
+  const up = n.sentiment === 'bullish';
+  const neutral = n.sentiment === 'neutral';
+  const sentColor = neutral ? '#888' : up ? '#00a050' : '#FF3B30';
+  const sentBg = neutral ? '#f5f5f3' : up ? 'rgba(0,214,79,0.06)' : 'rgba(255,59,48,0.06)';
+  const catTag = n.cat==='tech'?'t-blue':n.cat==='crypto'?'t-gold':n.cat==='energy'?'t-green':n.cat==='finance'?'t-purple':'t-grey';
+  return (
+    '<div class="card news-card" data-cat="'+n.cat+'" style="cursor:pointer;transition:all 0.2s;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;gap:0.5rem;">'
+    +'<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">'
+    +'<span style="font-size:1.25rem;">'+n.img+'</span>'
+    +'<span style="font-family:var(--f2);font-weight:900;font-size:0.85rem;color:var(--cg);">'+n.ticker+'</span>'
+    +'<span style="font-size:0.75rem;color:#aaa;">'+n.company+'</span>'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;flex-shrink:0;">'
+    +'<span style="font-family:var(--f2);font-weight:900;font-size:0.88rem;color:'+sentColor+';">'+n.chg+'</span>'
+    +'<span style="background:'+sentBg+';color:'+sentColor+';font-size:0.65rem;font-weight:700;padding:0.1rem 0.5rem;border-radius:100px;text-transform:uppercase;">'+n.sentiment+'</span>'
+    +'</div>'
+    +'</div>'
+    +'<h3 style="font-size:0.92rem;font-weight:700;color:#0a0a0a;line-height:1.4;margin-bottom:0.5rem;">'+n.headline+'</h3>'
+    +'<p style="font-size:0.8rem;color:#888;line-height:1.6;margin-bottom:0.75rem;">'+n.summary+'</p>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+    +'<span style="font-size:0.72rem;color:#bbb;">'+n.time+'</span>'
+    +'<span class="tag '+catTag+'" style="font-size:0.65rem;">'+n.cat+'</span>'
+    +'</div>'
+    +'</div>'
+  );
+}
+
+function filterNews(btn, cat){
+  document.querySelectorAll('.news-pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.news-card').forEach(card=>{
+    card.style.display = (cat==='all' || card.dataset.cat===cat) ? 'block' : 'none';
+  });
+}
 
 function mockGetOrders(){apiGetOrders();}
 function showProxyHelp(){
