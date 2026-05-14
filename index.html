@@ -358,6 +358,8 @@ tr:hover td{background:#fafaf8;}
 .news-pill:hover{background:#0a0a0a;color:#fff;border-color:#0a0a0a;}
 .news-pill.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a;}
 .news-card:hover{border-color:#0a0a0a !important;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 </style>
 </head>
 <body>
@@ -556,6 +558,10 @@ tr:hover td{background:#fafaf8;}
         <div class="sb-item" id="sb-tips" onclick="goDash('tips')"><span>💡</span> Wealth Tips</div>
         <div class="sb-item" id="sb-trading101" onclick="goDash('trading101')"><span>📚</span> Trading 101</div>
         <div class="sb-item" id="sb-news" onclick="goDash('news')"><span>📰</span> Market News</div>
+        <div class="sb-item" id="sb-savings" onclick="goDash('savings')"><span>🏦</span> Savings Account</div>
+        <div class="sb-item" id="sb-community" onclick="goDash('community')"><span>🤝</span> Community</div>
+        <div class="sb-item" id="sb-upskill" onclick="goDash('upskill')"><span>🎓</span> Upskilling</div>
+        <div class="sb-item" id="sb-ai" onclick="goDash('ai')"><span>🤖</span> AI Coach</div>
       </div>
       <div class="sb-section">
         <div class="sb-label" style="display:flex;align-items:center;gap:0.4rem;">
@@ -625,6 +631,10 @@ tr:hover td{background:#fafaf8;}
         <button class="sb-item" style="width:100%;" onclick="goDash('tips');setMobileActive('tips');closeMobileDrawer()"><span>💡</span> Wealth Tips</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('trading101');setMobileActive('trading101');closeMobileDrawer()"><span>📚</span> Trading 101</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('news');setMobileActive('news');closeMobileDrawer()"><span>📰</span> Market News</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('savings');setMobileActive('savings');closeMobileDrawer()"><span>🏦</span> Savings Account</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('community');setMobileActive('community');closeMobileDrawer()"><span>🤝</span> Community</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('upskill');setMobileActive('upskill');closeMobileDrawer()"><span>🎓</span> Upskilling</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('ai');setMobileActive('ai');closeMobileDrawer()"><span>🤖</span> AI Coach</button>
       </div>
 
       <div style="margin-bottom:0.5rem;margin-top:1rem;">
@@ -731,7 +741,7 @@ function goDash(tab){
   if(sb)sb.classList.add('active');
   setMobileActive(tab);
   updateNavLockState();
-  const pages={portfolio:pagePortfolio,research:pageResearch,orders:pageOrders,positions:pagePositions,tips:pageTips,trading101:pageTrade101,kyc:pageKYC,settings:pageSettings,news:pageNews};
+  const pages={portfolio:pagePortfolio,research:pageResearch,orders:pageOrders,positions:pagePositions,tips:pageTips,trading101:pageTrade101,kyc:pageKYC,settings:pageSettings,news:pageNews,savings:pageSavings,community:pageCommunity,upskill:pageUpskill,ai:pageAI};
   document.getElementById('dashMain').innerHTML=pages[tab]?pages[tab]():'';
   initPage(tab);
   window.scrollTo(0,0);
@@ -1405,6 +1415,9 @@ function initPage(tab){
   }
   if(tab==='tips'){
     setTimeout(()=>calcCompound(),100);
+  }
+  if(tab==='savings'){
+    setTimeout(()=>calcSavings(),100);
   }
 }
 
@@ -2746,7 +2759,7 @@ function showToast(msg, type='green'){
 // ─── Mobile nav helpers ───────────────────────────────────────
 function setMobileActive(tab){
   // Update bottom nav active states
-  const bottomTabs = ['portfolio','orders','tips','news'];
+  const bottomTabs = ['portfolio','orders','tips','news','savings','community','upskill','ai'];
   bottomTabs.forEach(t => {
     const el = document.getElementById('mn-'+t);
     if(!el) return;
@@ -3070,6 +3083,443 @@ function filterNews(btn, cat){
   document.querySelectorAll('.news-card').forEach(card=>{
     card.style.display = (cat==='all' || card.dataset.cat===cat) ? 'block' : 'none';
   });
+}
+
+// ─── SAVINGS ACCOUNT PAGE ─────────────────────────────────────
+function pageSavings(){
+  return `
+<div class="ph"><h1 class="pt">Savings Account</h1><p class="ps">Your money, working harder — automatically.</p></div>
+
+<!-- APY Hero Banner -->
+<div style="background:#0a0a0a;border-radius:20px;padding:2rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+  <div>
+    <div style="font-size:0.72rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:0.4rem;">Core Savings Rate</div>
+    <div style="font-family:var(--f2);font-size:3.5rem;font-weight:900;color:var(--cg);line-height:1;letter-spacing:-0.03em;">4.75%</div>
+    <div style="font-size:0.82rem;color:#555;margin-top:0.35rem;">APY · Updated daily · Via partner banks</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:0.75rem;color:#555;margin-bottom:0.5rem;">Total saved across all pods</div>
+    <div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:#fff;">$8,420.00</div>
+    <div style="color:var(--cg);font-size:0.82rem;font-weight:600;margin-top:0.2rem;">+ $32.41 earned this month</div>
+  </div>
+</div>
+
+<!-- Income Splitting Rule -->
+<div class="card" style="margin-bottom:1.5rem;border-color:rgba(0,214,79,0.2);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <div>
+      <h3 style="font-size:1rem;font-weight:700;">Paycheck Splitter</h3>
+      <p style="font-size:0.8rem;color:#888;margin-top:0.2rem;">Auto-routes your income on deposit</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <span style="font-size:0.75rem;color:var(--cg);font-weight:700;">ACTIVE</span>
+      <div style="width:36px;height:20px;background:var(--cg);border-radius:100px;position:relative;cursor:pointer;">
+        <div style="width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;transition:all 0.2s;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;" id="splitBars">
+    ${[{label:'Bills',pct:50,color:'#007AFF'},{label:'Emergency Fund',pct:20,color:' var(--cg)'},{label:'Vacation',pct:20,color:'#BF5AF2'},{label:'Fun Money',pct:10,color:'#FF9500'}].map(r=>`
+    <div style="flex:1;min-width:100px;background:#f7f7f5;border-radius:12px;padding:0.85rem;">
+      <div style="font-size:0.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;">${r.label}</div>
+      <div style="font-family:var(--f2);font-size:1.4rem;font-weight:900;color:#0a0a0a;">${r.pct}%</div>
+      <div style="height:4px;background:#e5e5e0;border-radius:2px;margin-top:0.5rem;overflow:hidden;">
+        <div style="height:100%;width:${r.pct}%;background:${r.color};border-radius:2px;"></div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div style="font-size:0.78rem;color:#aaa;">Next paycheck: <strong style="color:#333;">Est. $3,200</strong> → Bills $1,600 · Emergency $640 · Vacation $640 · Fun $320</div>
+</div>
+
+<!-- Pods Grid -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+  <h3 style="font-size:1rem;font-weight:700;">My Savings Pods</h3>
+  <button class="btn btn-lime btn-sm" onclick="addPodModal()">+ New Pod</button>
+</div>
+<div class="g3" style="margin-bottom:1.5rem;" id="podsGrid">
+  ${[
+    {name:'Emergency Fund',emoji:'🛡️',saved:3200,goal:5000,color:'var(--cg)',bonus:'$50 bonus at goal!',daysLeft:47},
+    {name:'Dream Vacation',emoji:'✈️',saved:1840,goal:3000,color:'#BF5AF2',bonus:null,daysLeft:62},
+    {name:'Rent Buffer',emoji:'🏠',saved:2100,goal:2500,color:'#007AFF',bonus:null,daysLeft:18},
+    {name:'New MacBook',emoji:'💻',saved:680,goal:2000,color:'#FF9500',bonus:null,daysLeft:94},
+    {name:'Wedding Fund',emoji:'💍',saved:600,goal:8000,color:'#FF3B30',bonus:null,daysLeft:310},
+  ].map(p=>{
+    const pct=Math.round((p.saved/p.goal)*100);
+    return `<div class="card" style="border-color:#f0f0ee;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div style="font-size:1.75rem;">${p.emoji}</div>
+        <span style="font-size:0.7rem;color:#aaa;font-weight:600;">${p.daysLeft}d left</span>
+      </div>
+      <div style="font-weight:700;font-size:0.95rem;color:#0a0a0a;margin-bottom:0.25rem;">${p.name}</div>
+      <div style="font-family:var(--f2);font-size:1.5rem;font-weight:900;color:#0a0a0a;">$${p.saved.toLocaleString()}</div>
+      <div style="font-size:0.75rem;color:#aaa;margin-bottom:0.65rem;">of $${p.goal.toLocaleString()} goal</div>
+      <div style="height:6px;background:#f0f0ee;border-radius:3px;overflow:hidden;margin-bottom:0.5rem;">
+        <div style="height:100%;width:${pct}%;background:${p.color};border-radius:3px;transition:width 0.5s ease;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.78rem;font-weight:700;color:${p.color};">${pct}%</span>
+        ${p.bonus?`<span style="font-size:0.68rem;background:rgba(0,214,79,0.08);color:var(--cg);border:1px solid rgba(0,214,79,0.2);padding:0.1rem 0.5rem;border-radius:100px;font-weight:700;">${p.bonus}</span>`:''}
+      </div>
+    </div>`;
+  }).join('')}
+  <!-- Add new pod card -->
+  <div class="card" style="border:2px dashed #e5e5e0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:180px;transition:all 0.2s;" onclick="addPodModal()">
+    <div style="font-size:2rem;margin-bottom:0.5rem;color:#ccc;">+</div>
+    <div style="font-size:0.85rem;font-weight:600;color:#aaa;">New Pod</div>
+  </div>
+</div>
+
+<!-- Add Pod Modal -->
+<div id="podModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:24px;padding:2rem;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem;">Create Savings Pod</h3>
+    <div class="form-g"><label class="f-lbl">Pod Name</label><input class="f-in" id="podName" placeholder="e.g. Dream Car"></div>
+    <div class="form-g"><label class="f-lbl">Goal Amount ($)</label><input class="f-in" id="podGoal" type="number" placeholder="5000"></div>
+    <div class="form-g"><label class="f-lbl">Auto-contribute (% of paycheck)</label><input class="f-in" id="podPct" type="number" placeholder="10" min="1" max="100"></div>
+    <div class="form-g"><label class="f-lbl">Choose Emoji</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="emojiPicker">
+        ${['🎯','🚗','💍','🏠','✈️','💻','🎓','🏋️','🎸','🌴','💎','🛡️'].map(e=>`<button onclick="selectEmoji(this,'${e}')" style="width:40px;height:40px;border-radius:10px;border:1.5px solid #e5e5e0;background:#fff;font-size:1.2rem;cursor:pointer;">${e}</button>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+      <button class="btn btn-lime btn-full" onclick="createPod()">Create Pod</button>
+      <button class="btn btn-outline" onclick="closePodModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Interest Calculator -->
+<div class="card" style="background:#f7f7f5;border-color:#eee;">
+  <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">Interest Estimator</h3>
+  <div class="g2" style="gap:0.75rem;margin-bottom:0.75rem;">
+    <div><div class="api-lbl">Balance ($)</div><input class="ai ai-full" id="savBal" value="8420" type="number" oninput="calcSavings()"></div>
+    <div><div class="api-lbl">APY (%)</div><input class="ai ai-full" id="savAPY" value="4.75" type="number" oninput="calcSavings()"></div>
+  </div>
+  <div id="savResult" style="font-size:0.85rem;color:#555;line-height:1.8;"></div>
+</div>
+`;
+}
+
+function addPodModal(){ document.getElementById('podModal').style.display='flex'; }
+function closePodModal(){ document.getElementById('podModal').style.display='none'; }
+let _selEmoji='🎯';
+function selectEmoji(btn,e){
+  document.querySelectorAll('#emojiPicker button').forEach(b=>b.style.borderColor='#e5e5e0');
+  btn.style.borderColor='var(--cg)';
+  _selEmoji=e;
+}
+function createPod(){
+  const name=document.getElementById('podName')?.value||'New Pod';
+  showToast(_selEmoji+' '+name+' pod created!','green');
+  closePodModal();
+}
+function calcSavings(){
+  const bal=parseFloat(document.getElementById('savBal')?.value)||0;
+  const apy=parseFloat(document.getElementById('savAPY')?.value)||0;
+  const daily=(bal*apy/100)/365;
+  const monthly=daily*30;
+  const yearly=bal*(apy/100);
+  const el=document.getElementById('savResult');
+  if(el) el.innerHTML=`<span style="color:#555;">Daily: </span><strong style="color:var(--cg);">$${daily.toFixed(3)}</strong> &nbsp;|&nbsp; <span style="color:#555;">Monthly: </span><strong style="color:var(--cg);">$${monthly.toFixed(2)}</strong> &nbsp;|&nbsp; <span style="color:#555;">Yearly: </span><strong style="color:var(--cg);">$${yearly.toFixed(2)}</strong>`;
+}
+
+// ─── COMMUNITY PAGE ───────────────────────────────────────────
+function pageCommunity(){
+  const circles=[
+    {name:'Westside Savers',members:8,goal:10000,saved:6200,avatar:'🏘️',daysLeft:21,you:780},
+    {name:'HECS Payoff Squad',members:5,goal:25000,saved:18400,avatar:'🎓',daysLeft:45,you:3680},
+    {name:'Holiday Fund 2026',members:12,goal:6000,saved:2100,avatar:'🌴',daysLeft:83,you:175},
+  ];
+  const leaderboard=[
+    {name:'Alex M.',saved:3200,streak:14,avatar:'🧑'},
+    {name:'Jordan K.',saved:2800,streak:21,avatar:'👩'},
+    {name:'You',saved:1820,streak:7,avatar:'⭐'},
+    {name:'Sam R.',saved:1600,streak:5,avatar:'🧔'},
+    {name:'Riley T.',saved:1100,streak:3,avatar:'👱'},
+  ];
+  return `
+<div class="ph"><h1 class="pt">Community</h1><p class="ps">Save together, grow together.</p></div>
+
+<!-- Hero -->
+<div style="background:linear-gradient(135deg,#0a0a0a,#1a1a1a);border-radius:20px;padding:2rem;margin-bottom:1.5rem;color:#fff;">
+  <div style="font-size:0.72rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:0.75rem;">Your Impact</div>
+  <div class="g3" style="gap:1rem;">
+    <div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:var(--cg);">3</div><div style="font-size:0.75rem;color:#555;margin-top:0.1rem;">Active Circles</div></div>
+    <div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:var(--cg);">$4,635</div><div style="font-size:0.75rem;color:#555;margin-top:0.1rem;">You've contributed</div></div>
+    <div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:var(--cg);">25</div><div style="font-size:0.75rem;color:#555;margin-top:0.1rem;">Members helped</div></div>
+  </div>
+</div>
+
+<!-- Savings Circles -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+  <h3 style="font-size:1rem;font-weight:700;">My Savings Circles</h3>
+  <button class="btn btn-lime btn-sm" onclick="showToast('Circle creation coming soon!','green')">+ Create Circle</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;">
+  ${circles.map(circle=>{
+    const pct=Math.round((circle.saved/circle.goal)*100);
+    return `<div class="card" style="border-color:#f0f0ee;">
+      <div style="display:flex;align-items:flex-start;gap:1rem;">
+        <div style="font-size:2rem;width:48px;height:48px;background:#f5f5f3;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${circle.avatar}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
+            <div style="font-weight:700;font-size:0.95rem;color:#0a0a0a;">${circle.name}</div>
+            <span style="font-size:0.72rem;color:#aaa;">${circle.daysLeft}d · ${circle.members} members</span>
+          </div>
+          <div style="font-size:0.78rem;color:#888;margin-bottom:0.65rem;">Your contribution: <strong style="color:#333;">$${circle.you.toLocaleString()}</strong></div>
+          <div style="height:8px;background:#f0f0ee;border-radius:4px;overflow:hidden;margin-bottom:0.4rem;">
+            <div style="height:100%;width:${pct}%;background:var(--cg);border-radius:4px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;">
+            <span style="color:var(--cg);font-weight:700;">$${circle.saved.toLocaleString()} saved</span>
+            <span style="color:#aaa;">of $${circle.goal.toLocaleString()} · ${pct}%</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}
+</div>
+
+<!-- Leaderboard -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <h3 style="font-size:1rem;font-weight:700;">This Month's Savers 🏆</h3>
+    <span style="font-size:0.75rem;color:#aaa;">May 2026</span>
+  </div>
+  ${leaderboard.map((p,i)=>`
+  <div style="display:flex;align-items:center;gap:0.85rem;padding:0.75rem 0;border-bottom:${i<leaderboard.length-1?'1px solid #f5f5f3':'none'};">
+    <div style="font-family:var(--f2);font-weight:900;font-size:1rem;color:${i===0?'#FFD60A':i===1?'#888':i===2?'#CD7F32':'#ccc'};width:22px;text-align:center;">${i+1}</div>
+    <div style="width:38px;height:38px;border-radius:50%;background:${p.name==='You'?'var(--cg)':'#f5f5f3'};display:flex;align-items:center;justify-content:center;font-size:1.1rem;">${p.avatar}</div>
+    <div style="flex:1;">
+      <div style="font-weight:${p.name==='You'?'700':'500'};color:${p.name==='You'?'var(--cg)':'#333'};font-size:0.9rem;">${p.name}</div>
+      <div style="font-size:0.72rem;color:#aaa;">🔥 ${p.streak} day streak</div>
+    </div>
+    <div style="font-family:var(--f2);font-weight:700;color:#0a0a0a;">$${p.saved.toLocaleString()}</div>
+  </div>`).join('')}
+</div>
+
+<!-- Invite -->
+<div style="background:#f7f7f5;border-radius:16px;padding:1.5rem;text-align:center;">
+  <div style="font-size:1.5rem;margin-bottom:0.5rem;">🤝</div>
+  <div style="font-weight:700;margin-bottom:0.35rem;">Invite friends to save together</div>
+  <div style="font-size:0.82rem;color:#888;margin-bottom:1rem;">You both get $10 when they save their first $100.</div>
+  <button class="btn btn-lime" onclick="showToast('Invite link copied!','green')" style="margin:0 auto;">Copy Invite Link</button>
+</div>`;
+}
+
+// ─── UPSKILLING PAGE ──────────────────────────────────────────
+function pageUpskill(){
+  const courses=[
+    {title:'Stock Market Fundamentals',provider:'Flex Academy',level:'Beginner',duration:'4 weeks',cost:'Free',enrolled:12400,rating:4.8,tag:'Investing',color:'var(--cg)',emoji:'📈'},
+    {title:'Options Trading Masterclass',provider:'TradeSchool Pro',level:'Advanced',duration:'8 weeks',cost:'$299',enrolled:3200,rating:4.9,tag:'Derivatives',color:'#FF9500',emoji:'⚡'},
+    {title:'Personal Finance for Gen Z',provider:'MoneyMind',level:'Beginner',duration:'2 weeks',cost:'Free',enrolled:28000,rating:4.7,tag:'Budgeting',color:'#BF5AF2',emoji:'💡'},
+    {title:'Python for Finance',provider:'CodeWealth',level:'Intermediate',duration:'12 weeks',cost:'$199',enrolled:5600,rating:4.6,tag:'Tech Skills',color:'#007AFF',emoji:'🐍'},
+    {title:'Tax Strategy for Investors',provider:'TaxSmart AU',level:'Intermediate',duration:'3 weeks',cost:'$99',enrolled:8900,rating:4.5,tag:'Tax',color:'#FF3B30',emoji:'🧾'},
+    {title:'Real Estate Investing 101',provider:'PropAcademy',level:'Beginner',duration:'6 weeks',cost:'$149',enrolled:7200,rating:4.7,tag:'Property',color:'#34C759',emoji:'🏠'},
+  ];
+  const paths=[
+    {name:'The Day Trader',steps:['Markets 101','Technical Analysis','Options Basics','Risk Management','Live Trading Sim'],current:2,color:'var(--cg)'},
+    {name:'The FIRE Seeker',steps:['Budgeting','Index Funds','Tax Minimisation','Side Income','FIRE Calculator'],current:3,color:'#BF5AF2'},
+    {name:'The Property Investor',steps:['Finance Basics','Market Research','Mortgages','Due Diligence','First Purchase'],current:1,color:'#007AFF'},
+  ];
+  return `
+<div class="ph"><h1 class="pt">Upskilling</h1><p class="ps">Invest in yourself — the highest-returning asset.</p></div>
+
+<!-- Your Learning Progress -->
+<div style="background:#0a0a0a;border-radius:20px;padding:1.75rem;margin-bottom:1.5rem;display:flex;gap:2rem;flex-wrap:wrap;">
+  <div><div style="font-size:0.7rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">XP This Month</div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:var(--cg);">2,840 XP</div></div>
+  <div><div style="font-size:0.7rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Courses Done</div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:#fff;">3</div></div>
+  <div><div style="font-size:0.7rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Day Streak</div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:'#FF9500';">🔥 7</div></div>
+  <div><div style="font-size:0.7rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Certificates</div><div style="font-family:var(--f2);font-size:2rem;font-weight:900;color:#fff;">2</div></div>
+</div>
+
+<!-- Learning Paths -->
+<h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Learning Paths</h3>
+<div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">
+  ${paths.map(p=>`
+  <div class="card" style="border-color:#f0f0ee;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+      <div style="font-weight:700;font-size:0.95rem;">${p.name}</div>
+      <span style="font-size:0.75rem;color:#aaa;">Step ${p.current}/${p.steps.length}</span>
+    </div>
+    <div style="display:flex;gap:0.25rem;align-items:center;flex-wrap:wrap;">
+      ${p.steps.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:0.25rem;">
+        <div style="padding:0.3rem 0.7rem;border-radius:100px;font-size:0.72rem;font-weight:600;
+          background:${i<p.current?p.color:i===p.current?'rgba(0,0,0,0.05)':'#f5f5f3'};
+          color:${i<p.current?'#fff':i===p.current?'#0a0a0a':'#aaa'};
+          border:${i===p.current?'2px solid '+p.color:'2px solid transparent'};">${s}</div>
+        ${i<p.steps.length-1?'<span style="color:#ddd;font-size:0.7rem;">›</span>':''}
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:0.85rem;">
+      <div style="height:4px;background:#f0f0ee;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round((p.current/p.steps.length)*100)}%;background:${p.color};border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>`).join('')}
+</div>
+
+<!-- Course Marketplace -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+  <h3 style="font-size:1rem;font-weight:700;">Course Marketplace</h3>
+  <div class="tg-group">
+    <button class="tg-btn active" onclick="filterCourses(this,'all')">All</button>
+    <button class="tg-btn" onclick="filterCourses(this,'free')">Free</button>
+    <button class="tg-btn" onclick="filterCourses(this,'paid')">Paid</button>
+  </div>
+</div>
+<div class="g2" style="gap:1rem;margin-bottom:1.5rem;" id="courseGrid">
+  ${courses.map(course=>`
+  <div class="card course-card" data-cost="${course.cost==='Free'?'free':'paid'}" style="border-color:#f0f0ee;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+      <div style="font-size:1.75rem;">${course.emoji}</div>
+      <span style="background:${course.cost==='Free'?'rgba(0,214,79,0.1)':'#f5f5f3'};color:${course.cost==='Free'?'var(--cg)':'#555'};font-size:0.72rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:100px;">${course.cost}</span>
+    </div>
+    <div style="font-weight:700;font-size:0.9rem;color:#0a0a0a;margin-bottom:0.2rem;">${course.title}</div>
+    <div style="font-size:0.75rem;color:#888;margin-bottom:0.6rem;">${course.provider} · ${course.level} · ${course.duration}</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+      <span style="color:#FFD60A;font-size:0.78rem;">★ ${course.rating}</span>
+      <span style="color:#aaa;font-size:0.72rem;">${course.enrolled.toLocaleString()} enrolled</span>
+    </div>
+    <button class="btn btn-lime btn-sm btn-full" onclick="showToast('Enrolled in ${course.title}!','green')">
+      ${course.cost==='Free'?'Enrol Free':'Enrol Now'}
+    </button>
+  </div>`).join('')}
+</div>
+
+<!-- ISA/Apprenticeship banner -->
+<div style="background:#0a0a0a;border-radius:20px;padding:1.75rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+  <div style="font-size:2.5rem;">🤝</div>
+  <div style="flex:1;">
+    <div style="font-family:var(--f2);font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:0.35rem;">Employer Apprenticeship Program</div>
+    <div style="font-size:0.85rem;color:#555;margin-bottom:0.75rem;">Partner with companies offering income-share agreements. Study now, pay back only when you land the job.</div>
+    <button class="btn btn-lime btn-sm" onclick="showToast('Apprenticeship applications open May 2026!','green')">Browse Opportunities →</button>
+  </div>
+</div>`;
+}
+
+function filterCourses(btn,type){
+  document.querySelectorAll('.tg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.course-card').forEach(card=>{
+    card.style.display=(type==='all'||card.dataset.cost===type)?'block':'none';
+  });
+}
+
+// ─── AI COACH PAGE ────────────────────────────────────────────
+function pageAI(){
+  return `
+<div class="ph"><h1 class="pt">AI Coach</h1><p class="ps">Your personal money mentor — always on, never judgy.</p></div>
+
+<!-- Quick prompts -->
+<div style="margin-bottom:1.25rem;">
+  <div style="font-size:0.75rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.65rem;">Try asking:</div>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="quickPrompts">
+    ${[
+      'Can I afford a car next year?',
+      'Show me a plan to save $10k for a home deposit',
+      'Is my emergency fund big enough?',
+      'How do I start investing with $500?',
+      'What is dollar-cost averaging?',
+      'Review my spending this month',
+    ].map(p=>`<button class="news-pill" onclick="sendPrompt(this.textContent)">${p}</button>`).join('')}
+  </div>
+</div>
+
+<!-- Chat window -->
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:1rem;border-color:#f0f0ee;">
+  <div id="aiChat" style="height:420px;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.85rem;">
+    <!-- Welcome message -->
+    <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+      <div style="width:34px;height:34px;border-radius:50%;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🤖</div>
+      <div style="background:#f5f5f3;border-radius:0 16px 16px 16px;padding:0.85rem 1rem;max-width:80%;">
+        <div style="font-size:0.88rem;color:#333;line-height:1.6;">Hey! I'm your Flex AI Coach 👋<br><br>I can help you build savings goals, understand investments, plan for big purchases, or just answer money questions in plain English.<br><br>What's on your mind?</div>
+      </div>
+    </div>
+  </div>
+  <!-- Input bar -->
+  <div style="border-top:1px solid #f0f0ee;padding:0.85rem 1rem;display:flex;gap:0.5rem;align-items:center;background:#fff;">
+    <input id="aiInput" class="f-in" placeholder="Ask me anything about your money…" style="flex:1;border-radius:100px;padding:0.65rem 1.1rem;"
+      onkeydown="if(event.key==='Enter')sendPrompt(document.getElementById('aiInput').value)">
+    <button class="btn btn-lime" style="border-radius:100px;padding:0.65rem 1.25rem;flex-shrink:0;" onclick="sendPrompt(document.getElementById('aiInput').value)">Send</button>
+  </div>
+</div>
+
+<!-- Disclaimer -->
+<div style="text-align:center;font-size:0.72rem;color:#ccc;padding:0.5rem;">
+  AI Coach provides general financial education only — not financial advice. Always consult a licensed adviser for personal decisions.
+</div>`;
+}
+
+// AI Chat logic — uses Claude API in artifacts context
+const AI_RESPONSES = {
+  'car': 'Based on the general 20/4/10 rule: put 20% down, finance for no more than 4 years, and keep total car costs under 10% of monthly income. With a $100k paper account and assuming a $70k real income, you could reasonably target a $15-20k vehicle. Want me to map out a savings timeline for a specific amount?',
+  'home deposit': "A $10k deposit plan in 12 months means saving about $833/month. Here's a simple structure:\n\n• Automate $833 to a dedicated Savings Pod on payday\n• Keep it in your high-yield account at 4.75% APY — you'll earn ~$237 in interest\n• Cut 1 discretionary expense (subscriptions, dining out) to find the gap\n\nWant me to break it down week by week?",
+  'emergency': "The rule of thumb is 3–6 months of living expenses. If your monthly costs are $3,000, you're targeting $9,000–$18,000.\n\nYour Emergency Fund pod shows $3,200 saved — that's about 1.1 months covered. You're building well! At your current auto-contribution rate you'll hit the 3-month mark in about 47 days. 💪",
+  'invest': "Starting with $500 is perfect for index funds. Here's a beginner path:\n\n1. Open a paper trading account (you have one!) and practice\n2. Learn what an ETF is — think of it as a basket of stocks\n3. Choose one broad market ETF like VTI (US) or VAS (AU)\n4. Set up a recurring $50-100/month contribution\n5. Don't touch it for 10+ years\n\nThe key is consistency over perfection. Want a 12-month starter plan?",
+  'dollar-cost': "Dollar-cost averaging (DCA) means investing a fixed amount regularly — say $200 every fortnight — regardless of whether the market is up or down.\n\nWhen prices are high, you buy fewer units. When prices are low, you buy more. Over time, this smooths out your average purchase price and removes the stress of trying to 'time' the market.\n\nMost research shows DCA beats trying to time the market for 80%+ of investors. It's the strategy behind most super/401k plans.",
+  'spending': "I can see your paper account has $100,000 in cash and no open positions yet. Here's what I'd suggest:\n\n• Start by setting up your Savings Pods for your 3 main financial goals\n• Enable the Paycheck Splitter to automate allocation on income\n• Once you have 1 month of expenses saved, consider putting 10-20% into index ETFs\n\nWant a personalised 90-day money plan?",
+};
+
+async function sendPrompt(text){
+  if(!text||!text.trim()) return;
+  const chat = document.getElementById('aiChat');
+  const input = document.getElementById('aiInput');
+  if(input) input.value='';
+
+  // Add user message
+  chat.innerHTML += `<div style="display:flex;justify-content:flex-end;">
+    <div style="background:#0a0a0a;color:#fff;border-radius:16px 0 16px 16px;padding:0.75rem 1rem;max-width:80%;font-size:0.88rem;line-height:1.5;">${text}</div>
+  </div>`;
+
+  // Typing indicator
+  chat.innerHTML += `<div id="aiTyping" style="display:flex;gap:0.65rem;align-items:flex-start;">
+    <div style="width:34px;height:34px;border-radius:50%;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🤖</div>
+    <div style="background:#f5f5f3;border-radius:0 16px 16px 16px;padding:0.85rem 1rem;">
+      <div style="display:flex;gap:4px;align-items:center;">
+        <div style="width:6px;height:6px;border-radius:50%;background:#aaa;animation:bounce 1s infinite;"></div>
+        <div style="width:6px;height:6px;border-radius:50%;background:#aaa;animation:bounce 1s 0.2s infinite;"></div>
+        <div style="width:6px;height:6px;border-radius:50%;background:#aaa;animation:bounce 1s 0.4s infinite;"></div>
+      </div>
+    </div>
+  </div>`;
+  chat.scrollTop = chat.scrollHeight;
+
+  // Try Claude API, fall back to canned responses
+  let reply = '';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        system:'You are Flex AI Coach, a friendly Gen Z-focused personal finance assistant built into the Flex investing app. Keep responses concise (under 150 words), use plain English, be encouraging and practical. Use bullet points for plans. Never give specific stock picks. Context: user has a paper trading account with $100k starting balance, uses Alpaca Markets API.',
+        messages:[{role:'user',content:text}]
+      })
+    });
+    if(res.ok){
+      const d = await res.json();
+      reply = d.content?.[0]?.text || '';
+    }
+  } catch(e){}
+
+  // Fall back to canned responses if API fails
+  if(!reply){
+    const key = Object.keys(AI_RESPONSES).find(k=>text.toLowerCase().includes(k));
+    reply = key ? AI_RESPONSES[key] : "Great question! That depends on your personal situation — income, expenses, and goals all matter. Can you tell me a bit more about what you're working towards? I can give you a much more tailored answer. 💪";
+  }
+
+  // Replace typing indicator
+  const typing = document.getElementById('aiTyping');
+  if(typing) typing.outerHTML = `<div style="display:flex;gap:0.65rem;align-items:flex-start;">
+    <div style="width:34px;height:34px;border-radius:50%;background:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">🤖</div>
+    <div style="background:#f5f5f3;border-radius:0 16px 16px 16px;padding:0.85rem 1rem;max-width:80%;">
+      <div style="font-size:0.88rem;color:#333;line-height:1.65;white-space:pre-line;">${reply}</div>
+    </div>
+  </div>`;
+  chat.scrollTop = chat.scrollHeight;
 }
 
 function mockGetOrders(){apiGetOrders();}
