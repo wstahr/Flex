@@ -289,6 +289,11 @@ tr:hover td{background:#fafaf8;}
 
   /* Stat cards — 2 column on mobile */
   .stat-c .s-val{font-size:1.4rem;}
+  /* Portfolio chart full width on mobile */
+  #portChart{height:180px !important;}
+  #allocChart{max-width:160px !important;height:160px !important;}
+  /* Chart card header wrap */
+  .card > div[style*="justify-content:space-between"]{flex-wrap:wrap;gap:0.5rem;}
 
   /* Portfolio page title row */
   .ph[style*="justify-content:space-between"]{flex-direction:column;gap:0.75rem;}
@@ -332,6 +337,14 @@ tr:hover td{background:#fafaf8;}
   .g4{grid-template-columns:1fr 1fr;}
   .stat-c .s-val{font-size:1.25rem;}
   .api-box .irow{flex-direction:column;}
+}
+/* Very small screens — stack everything */
+@media(max-width:390px){
+  .g4{grid-template-columns:1fr;}
+  .g3{grid-template-columns:1fr;}
+  .g2{grid-template-columns:1fr;}
+  .stat-c{padding:1rem;}
+  .stat-c .s-val{font-size:1.5rem;}
 }
 
 </style>
@@ -721,7 +734,7 @@ function pagePortfolio(){
     <button class="btn btn-outline btn-sm" onclick="loadLivePortfolio()" title="Refresh live data">↻ Refresh</button>
   </div>
 </div>
-<div class="g4" style="margin-bottom:1.5rem;">
+<div class="g4" style="margin-bottom:1.5rem;overflow:hidden;">
 <div class="stat-c" style="border-color:rgba(0,214,79,0.25);"><div class="s-lbl">Portfolio Value</div><div class="s-val" id="live-port-val" style="color:var(--cg);">$12,450.80</div><div class="s-chg" id="live-daily-chg"><span style="color:#00a050;font-size:0.78rem;font-weight:600;">▲ +$284.30 today (+2.34%)</span></div></div>
 <div class="stat-c"><div class="s-lbl">Cash Available</div><div class="s-val" id="live-cash">$3,200.00</div><div class="s-chg" id="live-bp" style="color:var(--lmuted);">Buying power: $8,432.50</div></div>
 <div class="stat-c"><div class="s-lbl">Total Return</div><div class="s-val" id="live-return">+18.6%</div><div class="s-chg" id="live-return-chg"><span style="color:#00a050;font-size:0.78rem;font-weight:600;">▲ +$1,950.80 all time</span></div></div>
@@ -738,11 +751,11 @@ function pagePortfolio(){
       <button class="tg-btn" onclick="this.parentNode.querySelectorAll('.tg-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');drawPortfolioChart('1Y')">1Y</button>
     </div>
   </div>
-  <canvas id="portChart" width="500" height="200"></canvas>
+  <canvas id="portChart" style="width:100%;height:200px;display:block;"></canvas>
 </div>
 <div class="card">
   <h3 style="font-size:1rem;margin-bottom:1rem;">Allocation</h3>
-  <canvas id="allocChart" width="200" height="180" style="max-height:160px;margin:0 auto;display:block;"></canvas>
+  <canvas id="allocChart" style="width:100%;max-width:200px;height:180px;max-height:180px;margin:0 auto;display:block;"></canvas>
   <div id="allocLegend" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.75rem;"></div>
 </div>
 </div>
@@ -1374,6 +1387,10 @@ function drawPortfolioChart(period){
   const canvas=document.getElementById('portChart');
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
+  // Match canvas internal resolution to its CSS display size
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  || canvas.offsetWidth  || 400;
+  canvas.height = rect.height || canvas.offsetHeight || 200;
   const W=canvas.width,H=canvas.height;
   ctx.clearRect(0,0,W,H);
   let pts=[];
@@ -1443,7 +1460,10 @@ function drawAllocChart(liveData){
   const total=data.reduce((s,d)=>s+d.value,0);
   if(total<=0) return;
   let start=-Math.PI/2;
-  const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+  // Match canvas to its CSS size
+  const rect2 = canvas.getBoundingClientRect();
+  if(rect2.width > 0) { canvas.width = rect2.width; canvas.height = rect2.height; }
+  const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-8;
 
   data.forEach(d=>{
     const angle=(d.value/total)*Math.PI*2;
@@ -2190,7 +2210,10 @@ async function loadLivePortfolio(){
         if(canvas){
           const ctx=canvas.getContext('2d');
           ctx.clearRect(0,0,canvas.width,canvas.height);
-          const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+          // Match canvas to its CSS size
+  const rect2 = canvas.getBoundingClientRect();
+  if(rect2.width > 0) { canvas.width = rect2.width; canvas.height = rect2.height; }
+  const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-8;
           ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
           ctx.strokeStyle='#e5e5e0'; ctx.lineWidth=12; ctx.stroke();
           ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
@@ -2743,6 +2766,22 @@ function closeMobileDrawer(){
   const d = document.getElementById('mobileDrawer');
   if(d){ d.classList.remove('open'); document.body.style.overflow=''; }
 }
+
+
+// Redraw charts on resize/orientation change
+let _resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    // Only redraw if portfolio page is active
+    if(document.getElementById('portChart')) drawPortfolioChart('1W');
+    if(document.getElementById('allocChart') && window._lastPositions){
+      drawAllocChart(window._lastPositions);
+    } else if(document.getElementById('allocChart')){
+      drawAllocChart(null);
+    }
+  }, 150);
+});
 
 function mockGetOrders(){apiGetOrders();}
 function showProxyHelp(){
