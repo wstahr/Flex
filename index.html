@@ -917,14 +917,70 @@ function pageOrders(){
     <button class="o-tab buy active" id="tabBuy" onclick="setOrderSide('buy')">Buy</button>
     <button class="o-tab sell" id="tabSell" onclick="setOrderSide('sell')">Sell</button>
   </div>
-  <div class="form-g"><label class="f-lbl">Symbol</label><input class="f-in" id="oSym" placeholder="e.g. AAPL" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase();previewOrder()"></div>
-  <div class="form-g"><label class="f-lbl">Order Type</label><select class="f-in" id="oType" onchange="updateOrderForm();previewOrder()"><option value="market">Market</option><option value="limit">Limit</option><option value="stop">Stop</option><option value="stop_limit">Stop Limit</option><option value="trailing_stop">Trailing Stop</option></select></div>
-  <div class="g2" style="gap:0.75rem;">
-    <div class="form-g"><label class="f-lbl">Quantity</label><input class="f-in" id="oQty" placeholder="1" type="number" min="0.001" step="0.001" oninput="previewOrder()"></div>
-    <div class="form-g" id="limitPriceG"><label class="f-lbl">Limit Price ($)</label><input class="f-in" id="oLimitPrice" placeholder="190.00" type="number" oninput="previewOrder()"></div>
+
+  <!-- Symbol row with live price fetch -->
+  <div class="form-g">
+    <label class="f-lbl">Symbol</label>
+    <div style="position:relative;">
+      <input class="f-in" id="oSym" placeholder="e.g. AAPL" style="text-transform:uppercase;padding-right:110px;"
+        oninput="this.value=this.value.toUpperCase();fetchOrderPrice()">
+      <div id="oSymPrice" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-family:var(--f2);font-size:0.85rem;font-weight:700;color:#aaa;"></div>
+    </div>
+    <div id="oSymInfo" style="font-size:0.75rem;color:#aaa;margin-top:0.3rem;min-height:1rem;"></div>
   </div>
-  <div class="form-g"><label class="f-lbl">Time in Force</label><select class="f-in" id="oTIF" onchange="previewOrder()"><option value="day">Day</option><option value="gtc">Good Til Cancelled (GTC)</option><option value="ioc">Immediate or Cancel (IOC)</option><option value="fok">Fill or Kill (FOK)</option></select></div>
-  <div id="orderPreview" style="background:#f7f7f5;border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.83rem;color:#888;line-height:1.7;border:1px solid #eee;">Fill in the form to preview your order.</div>
+
+  <!-- Buy mode toggle: Shares vs Dollars -->
+  <div class="form-g">
+    <label class="f-lbl">Order Amount</label>
+    <div style="display:flex;background:#f5f5f3;border-radius:10px;padding:3px;gap:2px;margin-bottom:0.65rem;">
+      <button class="tg-btn active" id="modeShares" onclick="setOrderMode('shares')" style="flex:1;">By Shares</button>
+      <button class="tg-btn" id="modeDollars" onclick="setOrderMode('dollars')" style="flex:1;">By Dollar Amount</button>
+    </div>
+
+    <!-- Shares input -->
+    <div id="sharesInput">
+      <input class="f-in" id="oQty" placeholder="e.g. 1 or 0.5" type="number" min="0.001" step="0.001" oninput="previewOrder()">
+      <div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Fractional shares supported — minimum 0.001 shares</div>
+    </div>
+
+    <!-- Dollar amount input -->
+    <div id="dollarsInput" style="display:none;">
+      <div style="position:relative;">
+        <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#888;font-weight:600;">$</span>
+        <input class="f-in" id="oNotional" placeholder="Minimum $1.00" type="number" min="1" step="0.01"
+          style="padding-left:1.75rem;" oninput="previewOrder()">
+      </div>
+      <div id="oSharesEquiv" style="font-size:0.75rem;color:var(--cg);margin-top:0.3rem;font-weight:600;min-height:1rem;"></div>
+    </div>
+  </div>
+
+  <div class="form-g"><label class="f-lbl">Order Type</label>
+    <select class="f-in" id="oType" onchange="updateOrderForm();previewOrder()">
+      <option value="market">Market</option>
+      <option value="limit">Limit</option>
+      <option value="stop">Stop</option>
+      <option value="stop_limit">Stop Limit</option>
+      <option value="trailing_stop">Trailing Stop</option>
+    </select>
+  </div>
+  <div class="form-g" id="limitPriceG" style="display:none;">
+    <label class="f-lbl">Limit Price ($)</label>
+    <input class="f-in" id="oLimitPrice" placeholder="190.00" type="number" oninput="previewOrder()">
+  </div>
+  <div class="form-g"><label class="f-lbl">Time in Force</label>
+    <select class="f-in" id="oTIF" onchange="previewOrder()">
+      <option value="day">Day</option>
+      <option value="gtc">Good Til Cancelled (GTC)</option>
+      <option value="ioc">Immediate or Cancel (IOC)</option>
+      <option value="fok">Fill or Kill (FOK)</option>
+    </select>
+  </div>
+
+  <!-- Order preview card -->
+  <div id="orderPreview" style="background:#f7f7f5;border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.83rem;color:#888;line-height:1.7;border:1px solid #eee;">
+    Enter a symbol and amount to preview your order.
+  </div>
+
   <button class="btn btn-lime btn-full" onclick="submitLiveOrder()">Place Order</button>
   <div id="orderResult" style="margin-top:0.75rem;display:none;"></div>
 </div>
@@ -1773,24 +1829,168 @@ function setOrderSide(side){
   document.getElementById('tabSell').dataset.side='sell';
   previewOrder();
 }
-function updateOrderForm(){
-  const type=document.getElementById('oType')?.value;
-  const lpg=document.getElementById('limitPriceG');
-  if(lpg)lpg.style.display=type==='market'?'none':'block';
+// Order form state
+let _orderMode = 'shares';    // 'shares' | 'dollars'
+let _orderPrice = null;       // live price fetched from data API
+let _priceLoading = false;
+let _priceFetchTimer = null;
+
+function setOrderMode(mode){
+  _orderMode = mode;
+  document.getElementById('modeShares').classList.toggle('active', mode==='shares');
+  document.getElementById('modeDollars').classList.toggle('active', mode==='dollars');
+  document.getElementById('sharesInput').style.display  = mode==='shares'  ? 'block' : 'none';
+  document.getElementById('dollarsInput').style.display = mode==='dollars' ? 'block' : 'none';
+  // Dollar mode only works with market orders
+  if(mode==='dollars'){
+    const typeEl = document.getElementById('oType');
+    if(typeEl) typeEl.value = 'market';
+    updateOrderForm();
+  }
+  previewOrder();
 }
+
+function updateOrderForm(){
+  const type = document.getElementById('oType')?.value;
+  const lpg  = document.getElementById('limitPriceG');
+  if(lpg) lpg.style.display = (type==='market'||type==='trailing_stop') ? 'none' : 'block';
+  // Dollar mode locked to market orders
+  if(_orderMode==='dollars' && type!=='market'){
+    setOrderMode('shares');
+  }
+}
+
+// Debounced price fetch when symbol changes
+function fetchOrderPrice(){
+  clearTimeout(_priceFetchTimer);
+  previewOrder(); // show loading state immediately
+  const sym = (document.getElementById('oSym')?.value||'').trim();
+  if(sym.length < 1){ _orderPrice=null; updatePriceDisplay(); return; }
+  _priceFetchTimer = setTimeout(async ()=>{
+    const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+    if(!canCall){ _orderPrice=null; updatePriceDisplay(); return; }
+    _priceLoading = true;
+    updatePriceDisplay();
+    try{
+      const prices = await fetchLatestPrices([sym]);
+      _orderPrice = prices[sym]?.c || null;
+    } catch(e){ _orderPrice=null; }
+    _priceLoading = false;
+    updatePriceDisplay();
+    previewOrder();
+  }, 600); // wait 600ms after last keystroke
+}
+
+function updatePriceDisplay(){
+  const priceEl = document.getElementById('oSymPrice');
+  const infoEl  = document.getElementById('oSymInfo');
+  if(!priceEl) return;
+  if(_priceLoading){
+    priceEl.innerHTML = '<span style="color:#ccc;font-size:0.75rem;">loading…</span>';
+    if(infoEl) infoEl.textContent = '';
+  } else if(_orderPrice){
+    priceEl.innerHTML = '<span style="color:#0a0a0a;">'+fmtPrice(_orderPrice)+'</span>';
+    if(infoEl){
+      const sym = document.getElementById('oSym')?.value||'';
+      const minShares = (1 / _orderPrice);
+      infoEl.innerHTML = '<span style="color:var(--cg);font-weight:600;">✓ Fractional shares available</span>'
+        +' <span style="color:#aaa;">· Min $1 = ~'+minShares.toFixed(6)+' shares</span>';
+    }
+    // Update dollar-equivalent if in dollar mode
+    updateSharesEquiv();
+  } else {
+    priceEl.textContent = '';
+    if(infoEl){
+      const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+      infoEl.innerHTML = canCall ? '' : '<span style="color:#aaa;">Connect API to see live price</span>';
+    }
+  }
+}
+
+function updateSharesEquiv(){
+  const equivEl = document.getElementById('oSharesEquiv');
+  if(!equivEl) return;
+  const notional = parseFloat(document.getElementById('oNotional')?.value)||0;
+  if(notional > 0 && _orderPrice){
+    const shares = notional / _orderPrice;
+    equivEl.textContent = '≈ '+shares.toFixed(6)+' shares of '+(document.getElementById('oSym')?.value||'');
+  } else {
+    equivEl.textContent = '';
+  }
+}
+
 function previewOrder(){
-  const sym=(document.getElementById('oSym')?.value||'').toUpperCase()||'?';
-  const qty=document.getElementById('oQty')?.value||'?';
-  const type=document.getElementById('oType')?.value||'market';
-  const tif=document.getElementById('oTIF')?.value||'day';
-  const lp=document.getElementById('oLimitPrice')?.value;
-  const side=document.getElementById('tabBuy')?.classList.contains('active')?'buy':'sell';
-  const color=side==='buy'?'var(--green)':'var(--red)';
-  document.getElementById('orderPreview').innerHTML=`
-  <strong style="color:${color};">${side.toUpperCase()}</strong> <strong>${qty}</strong> share(s) of <strong style="color:var(--lime);">${sym}</strong>
-  <br>Order type: <strong>${type}</strong>${type!=='market'&&lp?` @ $${lp}`:''}
-  <br>Time in force: <strong>${tif}</strong>
-  <br><span style="color:var(--muted);font-size:0.78rem;">This is a paper trade — no real money involved</span>`;
+  const el = document.getElementById('orderPreview');
+  if(!el) return;
+
+  const sym  = (document.getElementById('oSym')?.value||'').toUpperCase();
+  const type = document.getElementById('oType')?.value || 'market';
+  const tif  = document.getElementById('oTIF')?.value  || 'day';
+  const lp   = document.getElementById('oLimitPrice')?.value;
+  const side = document.getElementById('tabBuy')?.classList.contains('active') ? 'buy' : 'sell';
+  const sideColor = side==='buy' ? '#00a050' : '#FF3B30';
+
+  // Get qty / notional depending on mode
+  const qty      = _orderMode==='shares'  ? parseFloat(document.getElementById('oQty')?.value)||0      : 0;
+  const notional = _orderMode==='dollars' ? parseFloat(document.getElementById('oNotional')?.value)||0  : 0;
+
+  // Update dollar-equivalent live
+  if(_orderMode==='dollars') updateSharesEquiv();
+
+  // Nothing entered yet
+  if(!sym || (qty===0 && notional===0)){
+    el.innerHTML = '<span style="color:#bbb;">Enter a symbol and amount to preview your order.</span>';
+    return;
+  }
+
+  // Validate $1 minimum for dollar mode
+  if(_orderMode==='dollars' && notional < 1 && notional > 0){
+    el.innerHTML = '<span style="color:#FF3B30;">⚠️ Minimum order is $1.00</span>';
+    return;
+  }
+
+  // Build estimated total
+  let estTotal = '';
+  let sharesNote = '';
+  if(_orderPrice){
+    if(_orderMode==='shares' && qty > 0){
+      const total = qty * _orderPrice;
+      estTotal = '<strong style="color:#0a0a0a;">$'+total.toFixed(2)+'</strong>';
+      if(qty < 1) sharesNote = ' <span style="background:rgba(0,214,79,0.08);color:var(--cg);font-size:0.7rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:100px;">Fractional</span>';
+    } else if(_orderMode==='dollars' && notional > 0){
+      const shares = notional / _orderPrice;
+      estTotal = '<strong style="color:#0a0a0a;">$'+notional.toFixed(2)+'</strong>';
+      sharesNote = ' ≈ <strong>'+shares.toFixed(6)+'</strong> shares';
+    }
+  } else {
+    // No live price — estimate from limit price if set
+    if(type!=='market' && lp && qty > 0){
+      estTotal = '≈ <strong style="color:#0a0a0a;">$'+(parseFloat(lp)*qty).toFixed(2)+'</strong>';
+    }
+  }
+
+  const amtDisplay = _orderMode==='shares'
+    ? '<strong>'+qty+'</strong> share'+(qty!==1?'s':'')+sharesNote
+    : '<strong>$'+notional.toFixed(2)+'</strong>'+sharesNote;
+
+  const priceNote = _orderPrice
+    ? ' @ <strong>'+fmtPrice(_orderPrice)+'</strong> per share'
+    : (type!=='market' && lp ? ' @ limit <strong>$'+lp+'</strong>' : '');
+
+  el.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.65rem;">'
+    +'<div><span style="color:'+sideColor+';font-weight:700;font-size:1rem;">'+side.toUpperCase()+'</span>'
+    +' '+amtDisplay+' of <span style="font-family:var(--f2);font-weight:900;color:#0a0a0a;">'+sym+'</span>'
+    +'</div>'
+    +(estTotal ? '<div style="font-size:1.1rem;">'+estTotal+'</div>' : '')
+    +'</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.78rem;color:#888;">'
+    +'<span>Type: <strong style="color:#333;">'+type+'</strong></span>'
+    +'<span>TIF: <strong style="color:#333;">'+tif+'</strong></span>'
+    +priceNote
+    +'</div>'
+    +(!_orderPrice && (CREDS.proxyUrl||CREDS.key) ? '<div style="font-size:0.72rem;color:#aaa;margin-top:0.4rem;">Fetching live price…</div>' : '')
+    +'<div style="font-size:0.72rem;color:#bbb;margin-top:0.4rem;">Paper trade · No real money involved</div>';
 }
 function filterOrders(btn,status){
   document.querySelectorAll('.tg-btn').forEach(b=>b.classList.remove('active'));
@@ -2473,17 +2673,26 @@ async function submitLiveOrder(){
   const lp   = (document.getElementById('oLimitPrice')?.value||'').trim();
   const side = document.getElementById('tabBuy')?.classList.contains('active') ? 'buy' : 'sell';
 
-  if(!sym)  { showToast('Enter a symbol','red');   return; }
-  if(!qty)  { showToast('Enter a quantity','red');  return; }
+  if(!sym) { showToast('Enter a symbol','red'); return; }
+  const isDollarMode = _orderMode === 'dollars';
+  const notionalVal  = (document.getElementById('oNotional')?.value||'').trim();
+  if(!isDollarMode && !qty) { showToast('Enter a quantity','red'); return; }
+  if(isDollarMode && (!notionalVal || parseFloat(notionalVal) < 1)) { showToast('Minimum order is $1.00','red'); return; }
 
   // Build the minimal correct body
+  // Build body: use notional for dollar-amount orders, qty for share-based
   const body = {
-    symbol:         sym,
-    qty:            qty,
-    side:           side,
-    type:           type,
-    time_in_force:  tif,
+    symbol:        sym,
+    side:          side,
+    type:          type,
+    time_in_force: tif,
   };
+  if(isDollarMode && notionalVal){
+    body.notional = notionalVal;   // Alpaca uses notional for dollar-based orders
+    if(parseFloat(notionalVal) < 1){ showToast('Minimum order is $1.00','red'); return; }
+  } else {
+    body.qty = qty;
+  }
   // Only include limit_price for limit / stop_limit order types
   if((type === 'limit' || type === 'stop_limit') && lp){
     body.limit_price = lp;
