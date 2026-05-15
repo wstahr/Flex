@@ -689,6 +689,102 @@ function updateNavCredStatus() {
   }
 }
 
+// ─── Mobile nav + lock state (defined early to avoid hoisting issues) ────────
+const API_REQUIRED_TABS = ['portfolio','orders','positions'];
+
+function setMobileActive(tab){
+  const bottomTabs=['portfolio','orders','tips','news','savings','community','upskill','ai'];
+  bottomTabs.forEach(t=>{
+    const el=document.getElementById('mn-'+t);
+    if(!el) return;
+    const dot=el.querySelector('.mn-icon-dot');
+    if(t===tab){ el.classList.add('active'); if(dot) dot.style.display='block'; }
+    else { el.classList.remove('active'); if(dot) dot.style.display='none'; }
+  });
+  const moreBtn=document.getElementById('mn-more');
+  const moreDot=moreBtn?.querySelector('.mn-icon-dot');
+  const inMore=!bottomTabs.includes(tab);
+  if(moreDot) moreDot.style.display=inMore?'block':'none';
+  if(inMore) moreBtn?.classList.add('active');
+  else moreBtn?.classList.remove('active');
+  updateDrawerCredStatus();
+}
+
+function updateDrawerCredStatus(){
+  const el=document.getElementById('drawerCredStatus');
+  if(!el) return;
+  if(CREDS.proxyUrl){
+    el.innerHTML='<span style="color:var(--cg);">🔀 Proxy active</span>';
+  } else if(CREDS.key){
+    el.innerHTML='<span style="color:#00a050;">🔑 Keys saved</span>';
+  } else {
+    el.innerHTML='<span style="color:#aaa;">No API keys — connect in Settings</span>';
+  }
+}
+
+function openMobileDrawer(){
+  updateDrawerCredStatus();
+  const d=document.getElementById('mobileDrawer');
+  if(d){ d.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+
+function closeMobileDrawer(){
+  const d=document.getElementById('mobileDrawer');
+  if(d){ d.classList.remove('open'); document.body.style.overflow=''; }
+}
+
+function updateNavLockState(){
+  const connected=!!(CREDS.proxyUrl||CREDS.key);
+  API_REQUIRED_TABS.forEach(tab=>{
+    const el=document.getElementById('sb-'+tab);
+    if(!el) return;
+    if(connected){ el.classList.remove('locked'); el.title=''; }
+    else { el.classList.add('locked'); el.title='Add API keys or Tunnel URL in API Settings to unlock'; }
+  });
+  ['portfolio','research','orders','positions'].forEach(tab=>{
+    const el=document.getElementById('drawer-'+tab);
+    if(!el) return;
+    if(API_REQUIRED_TABS.includes(tab)&&!connected){ el.classList.add('locked'); el.title='Requires API connection'; }
+    else { el.classList.remove('locked'); el.title=''; }
+  });
+  ['mn-portfolio','mn-orders'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(!connected) el.classList.add('locked');
+    else el.classList.remove('locked');
+  });
+  const badge=document.getElementById('sb-alpaca-status');
+  const connStatus=document.getElementById('sb-conn-status');
+  if(badge){
+    if(CREDS.proxyUrl){ badge.textContent='🔀 tunnel'; badge.style.background='rgba(0,214,79,0.1)'; badge.style.color='var(--cg)'; }
+    else if(CREDS.key){ badge.textContent='🔑 keys'; badge.style.background='rgba(0,214,79,0.1)'; badge.style.color='var(--cg)'; }
+    else { badge.textContent='not connected'; badge.style.background='#f0f0ee'; badge.style.color='#aaa'; }
+  }
+  if(connStatus){
+    if(CREDS.proxyUrl){ connStatus.innerHTML='<span style="color:var(--cg);">● Tunnel active</span><br><span style="font-size:0.68rem;color:#aaa;">All features unlocked</span>'; }
+    else if(CREDS.key){ connStatus.innerHTML='<span style="color:#00a050;">● API keys saved</span><br><span style="font-size:0.68rem;color:#aaa;">All features unlocked</span>'; }
+    else { connStatus.innerHTML='<span style="color:#aaa;">● Not connected</span><br><span style="font-size:0.68rem;color:#aaa;">Add keys in API Settings<br>to unlock trading.</span>'; }
+  }
+}
+
+function showToast(msg,type='green'){
+  let t=document.getElementById('flexToast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='flexToast';
+    t.style.cssText='position:fixed;bottom:2rem;right:2rem;z-index:999;padding:0.85rem 1.5rem;border-radius:12px;font-weight:600;font-size:0.88rem;font-family:var(--f1);transition:all 0.3s;opacity:0;transform:translateY(10px);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.12);';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.background=type==='green'?'rgba(0,214,79,0.95)':'rgba(255,59,48,0.95)';
+  t.style.color=type==='green'?'#000':'#fff';
+  t.style.opacity='1';
+  t.style.transform='translateY(0)';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(10px)'; },3000);
+}
+
+
 function populateCredFields() {
   updateNavLockState();
   // Populate any credential inputs that exist on the current page
