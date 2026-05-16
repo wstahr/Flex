@@ -1491,7 +1491,7 @@ function pageSettings(){
     </div>
     <div class="form-g">
       <label class="f-lbl">Tunnel / Proxy URL</label>
-      <input class="f-in" id="proxyUrlInput" type="url" placeholder="https://something.trycloudflare.com" oninput="saveKey('proxy',this.value)">
+      <input class="f-in" id="proxyUrlInput" type="url" placeholder="https://something.trycloudflare.com" oninput="saveKey('proxy',this.value)" onchange="saveKey('proxy',this.value)" onpaste="setTimeout(()=>saveKey('proxy',this.value),10)">
       <div style="font-size:0.78rem;color:#888;margin-top:0.4rem;">
         API keys stay on your Mac — not in the browser. All calls route through your local proxy.
         <a href="#" onclick="showProxyHelp()" style="color:var(--cg);"> How to set this up →</a>
@@ -2506,6 +2506,144 @@ window.addEventListener('resize',()=>{
 });
 
 // ─── Misc page helpers ────────────────────────────────────────
+
+async function testTunnelConnection(){
+  // Always read current value from input — covers paste, autofill, programmatic set
+  const urlEl = document.getElementById('proxyUrlInput');
+  const rawUrl = (urlEl?.value || '').trim().replace(/\/+$/, '');
+  if(rawUrl) saveKey('proxy', rawUrl);
+
+  const el = document.getElementById('tunnelResult');
+  if(!el) return;
+  el.style.display = 'block';
+
+  if(!CREDS.proxyUrl){
+    el.innerHTML = '<div style="background:rgba(255,214,10,0.1);border:1px solid rgba(255,214,10,0.3);border-radius:10px;padding:0.85rem;font-size:0.85rem;color:#b07800;">⚠️ Please enter a Tunnel URL first.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="color:#888;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;"><span style="width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--cg);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span> Connecting to ' + CREDS.proxyUrl + ' …</div>';
+  updateNavCredStatus();
+  updateNavLockState();
+
+  const t0 = Date.now();
+  try {
+    // Step 1: /health check
+    const healthRes = await fetch(CREDS.proxyUrl + '/health', { signal: AbortSignal.timeout(10000) });
+    const ms = Date.now() - t0;
+
+    if(!healthRes.ok){
+      el.innerHTML = '<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:0.85rem;font-size:0.85rem;color:#FF3B30;">❌ Proxy responded with HTTP ' + healthRes.status + ' — make sure <code>./start.sh</code> is running.</div>';
+      return;
+    }
+
+    const data = await healthRes.json().catch(()=>({}));
+    el.innerHTML = '<div style="background:rgba(0,214,79,0.06);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:1rem;font-size:0.85rem;">'
+      + '<div style="color:var(--cg);font-weight:700;margin-bottom:0.5rem;">✅ Tunnel connected! ' + ms + 'ms latency</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.82rem;color:#555;">'
+      + '<span>Proxy: <strong>' + (data.proxy || 'Flex Proxy') + '</strong></span>'
+      + '<span>Env: <strong style="color:var(--cg);">' + (data.alpaca_env || 'paper').toUpperCase() + '</strong></span>'
+      + '<span>Target: <strong>' + (data.base_url || 'broker-api') + '</strong></span>'
+      + '<span>Latency: <strong>' + ms + 'ms</strong></span>'
+      + '</div>'
+      + '<div style="margin-top:0.5rem;font-size:0.75rem;color:#aaa;">Keys never leave your Mac. All API calls route through your local proxy.</div>'
+      + '</div>';
+
+    // Step 2: verify Broker API reachable
+    el.innerHTML += '<div style="color:#888;font-size:0.82rem;margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;"><span style="width:10px;height:10px;border:1.5px solid #ddd;border-top-color:var(--cg);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span> Checking Broker API…</div>';
+
+    try {
+      const acctRes = await fetch(CREDS.proxyUrl + '/api/broker/v1/accounts?limit=1', { signal: AbortSignal.timeout(10000) });
+      const ms2 = Date.now() - t0;
+
+      // Remove the checking spinner
+      const spinEl = el.querySelector('div:last-child');
+      if(spinEl && spinEl.textContent.includes('Checking')) spinEl.remove();
+
+      if(acctRes.ok){
+        const accounts = await acctRes.json().catch(()=>[]);
+        const count = Array.isArray(accounts) ? accounts.length : (accounts.accounts||[]).length;
+        el.innerHTML += '<div style="background:rgba(0,160,80,0.06);border:1px solid rgba(0,160,80,0.15);border-radius:10px;padding:0.85rem;margin-top:0.5rem;font-size:0.85rem;">'
+          + '<div style="color:#00a050;font-weight:700;margin-bottom:0.25rem;">✅ Alpaca account reachable via tunnel</div>'
+          + '<div style="font-size:0.8rem;color:#555;">' + count + ' account' + (count !== 1 ? 's' : '') + ' found · ' + ms2 + 'ms total</div>'
+          + (count === 0 ? '<div style="font-size:0.75rem;color:#aaa;margin-top:0.25rem;">No accounts yet — create one via KYC</div>' : '')
+          + '</div>';
+        // Auto-load accounts panel if visible
+        if(document.getElementById('accountsPanel')) loadBrokerAccounts();
+      } else {
+        const errData = await acctRes.json().catch(()=>({}));
+        el.innerHTML += '<div style="background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.2);border-radius:10px;padding:0.85rem;margin-top:0.5rem;font-size:0.82rem;">'
+          + '<div style="color:#b07800;font-weight:700;">⚠️ Tunnel connected, but Broker API returned ' + acctRes.status + '</div>'
+          + '<div style="font-size:0.78rem;color:#888;margin-top:0.2rem;">' + (errData.message || 'Check that your ALPACA_KEY and ALPACA_SECRET in .env are correct Broker API credentials.') + '</div>'
+          + '</div>';
+      }
+    } catch(e2) {
+      el.innerHTML += '<div style="background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.2);border-radius:10px;padding:0.85rem;margin-top:0.5rem;font-size:0.82rem;color:#b07800;">⚠️ Tunnel up but could not reach Broker API: ' + e2.message + '</div>';
+    }
+
+  } catch(e) {
+    const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
+    el.innerHTML = '<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:1rem;font-size:0.85rem;">'
+      + '<div style="color:#FF3B30;font-weight:700;margin-bottom:0.5rem;">❌ ' + (isTimeout ? 'Connection timed out (10s)' : 'Could not reach tunnel') + '</div>'
+      + '<div style="color:#888;font-size:0.82rem;line-height:1.7;">'
+      + '1. Open Terminal on your Mac Mini<br>'
+      + '2. Run <code style="color:var(--cg);">cd ~/Desktop/FreedomWealth/freedom-proxy && ./start.sh</code><br>'
+      + '3. Copy the <code style="color:var(--cg);">.trycloudflare.com</code> URL shown<br>'
+      + '4. Paste it above and click Save & Test again<br><br>'
+      + '<span style="color:#aaa;font-size:0.75rem;">Error: ' + e.message + '</span>'
+      + '</div>'
+      + '</div>';
+  }
+}
+
+async function testAPIConnection(){
+  const keyEl = document.getElementById('settApiKey');
+  const secEl = document.getElementById('settApiSecret');
+  if(keyEl && keyEl.value) saveKey('key', keyEl.value);
+  if(secEl && secEl.value) saveKey('secret', secEl.value);
+  const key = getKey();
+  const secret = getSecret();
+  const el = document.getElementById('connResult');
+  if(!el) return;
+  el.style.display = 'block';
+
+  if(!key || !secret){
+    el.innerHTML = '<div style="background:rgba(255,214,10,0.1);border:1px solid rgba(255,214,10,0.3);border-radius:10px;padding:0.85rem;font-size:0.85rem;color:#b07800;">⚠️ Please enter both API Key ID and Secret Key.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="color:#888;font-size:0.85rem;">⏳ Testing Broker API connection…</div>';
+  updateNavCredStatus();
+  updateNavLockState();
+
+  const t0 = Date.now();
+  try {
+    const res = await fetch(brokerURL('/v1/accounts?limit=1'), { headers: brokerHeaders() });
+    const ms = Date.now() - t0;
+    if(res.ok){
+      const data = await res.json();
+      const count = Array.isArray(data) ? data.length : (data.accounts||[]).length;
+      el.innerHTML = '<div style="background:rgba(0,214,79,0.06);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:1rem;font-size:0.85rem;">'
+        + '<div style="color:var(--cg);font-weight:700;margin-bottom:0.5rem;">✅ Broker API connected! ' + ms + 'ms</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.82rem;color:#555;">'
+        + '<span>' + count + ' account' + (count!==1?'s':'') + ' found</span>'
+        + '<span>Env: <strong>' + (CREDS.env==='live'?'Production':'Sandbox') + '</strong></span>'
+        + '</div>'
+        + '<div style="margin-top:0.5rem;font-size:0.75rem;color:#aaa;">Keys saved for this session.</div>'
+        + '</div>';
+      setTimeout(loadBrokerAccounts, 300);
+    } else {
+      const data = await res.json().catch(()=>({}));
+      el.innerHTML = '<div style="background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);border-radius:10px;padding:0.85rem;font-size:0.85rem;color:#FF3B30;">❌ ' + res.status + ' — ' + (data.message||'Check your credentials') + '</div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="background:rgba(0,214,79,0.06);border:1px solid rgba(0,214,79,0.2);border-radius:10px;padding:0.85rem;font-size:0.85rem;">'
+      + '<div style="color:var(--cg);font-weight:700;">🔑 Keys saved for this session</div>'
+      + '<div style="font-size:0.78rem;color:#888;margin-top:0.25rem;">CORS blocks direct browser calls — use the Tunnel for full functionality.</div>'
+      + '</div>';
+  }
+}
+
 function pingAPI(){
   const el=document.getElementById('pingResult');
   el.style.display='block';
