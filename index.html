@@ -579,7 +579,7 @@ tr:hover td{background:#fafaf8;}
         <div class="sb-item" id="sb-orders" onclick="goDash('orders')"><span>📋</span> Orders</div>
         <div class="sb-item" id="sb-positions" onclick="goDash('positions')"><span>📌</span> Positions</div>
         <div class="sb-item" id="sb-accounts" onclick="goDash('accounts')"><span>🏦</span> Accounts</div>
-        <div class="sb-item" id="sb-kyc" onclick="goDash('kyc')"><span>🪪</span> KYC / Verify <span class="notif"></span></div>
+        <div class="sb-item" id="sb-kyc" onclick="goDash('kyc')"><span>🪪</span> Create Account</div>
         <div class="sb-item" id="sb-funding" onclick="goDash('funding')"><span>💸</span> Funding</div>
         <div class="sb-item" id="sb-settings" onclick="goDash('settings')"><span>⚙️</span> API Settings</div>
       </div>
@@ -652,7 +652,7 @@ tr:hover td{background:#fafaf8;}
         <button class="sb-item" id="drawer-orders" style="width:100%;" onclick="goDash('orders');setMobileActive('orders');closeMobileDrawer()"><span>📋</span> Orders</button>
         <button class="sb-item" id="drawer-positions" style="width:100%;" onclick="goDash('positions');setMobileActive('positions');closeMobileDrawer()"><span>📌</span> Positions</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('accounts');setMobileActive('accounts');closeMobileDrawer()"><span>🏦</span> Accounts</button>
-        <button class="sb-item" style="width:100%;" onclick="goDash('kyc');setMobileActive('kyc');closeMobileDrawer()"><span>🪪</span> KYC / Verify</button>
+        <button class="sb-item" style="width:100%;" onclick="goDash('kyc');setMobileActive('kyc');closeMobileDrawer()"><span>🪪</span> Create Account</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('funding');setMobileActive('funding');closeMobileDrawer()"><span>💸</span> Funding</button>
         <button class="sb-item" style="width:100%;" onclick="goDash('settings');setMobileActive('settings');closeMobileDrawer()"><span>⚙️</span> API Settings</button>
       </div>
@@ -1562,12 +1562,36 @@ function pageFunding(){
           <option value="SAVINGS">Savings</option>
         </select>
       </div>
-      <div class="form-g"><label class="f-lbl">Bank Account Number</label>
-        <input class="f-in" id="kBankAcct" placeholder="32131231abc">
+      <div class="form-g">
+        <label class="f-lbl">Bank Account Number</label>
+        <input class="f-in" id="kBankAcct" placeholder="e.g. 1234567890" type="text" inputmode="numeric"
+          maxlength="17" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onblur="validateBankAcct(this)">
+        <div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">
+          5–17 digit US bank account number · Found on a cheque or via online banking
+        </div>
       </div>
     </div>
-    <div class="form-g"><label class="f-lbl">Routing Number</label>
-      <input class="f-in" id="kBankRoute" placeholder="121000358">
+    <div class="form-g">
+      <label class="f-lbl">ABA Routing Number</label>
+      <input class="f-in" id="kBankRoute" placeholder="e.g. 021000021" type="text" inputmode="numeric"
+        maxlength="9" oninput="this.value=this.value.replace(/[^0-9]/g,'');validateRouting(this)" onblur="validateRouting(this)">
+      <div id="kBankRouteHint" style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">
+        9-digit ABA routing number · Found at the bottom-left of a US cheque
+        <details style="display:inline;cursor:pointer;">
+          <summary style="display:inline;color:var(--cg);cursor:pointer;list-style:none;">Common banks →</summary>
+          <div style="background:#f7f7f5;border-radius:8px;padding:0.65rem;margin-top:0.4rem;line-height:2;">
+            <div style="font-size:0.78rem;font-weight:700;color:#555;margin-bottom:0.25rem;">Sandbox test values:</div>
+            <div style="font-family:monospace;font-size:0.75rem;color:#333;">
+              021000021 — JPMorgan Chase<br>
+              011401533 — Bank of America<br>
+              121000358 — Wells Fargo<br>
+              021001208 — Citibank<br>
+              091000022 — US Bank<br>
+              021202337 — TD Bank
+            </div>
+          </div>
+        </details>
+      </div>
     </div>
     <div class="form-g"><label class="f-lbl">Nickname</label>
       <input class="f-in" id="kBankNick" placeholder="Bank of America Checking">
@@ -1623,7 +1647,7 @@ function pageFunding(){
     <div style="font-size:0.85rem;color:#555;line-height:2;">
       <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.5rem;">
         <div style="width:22px;height:22px;border-radius:50%;background:#0a0a0a;color:#fff;font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
-        <div>Create an account via <a href="#" onclick="goDash('kyc')" style="color:var(--cg);font-weight:600;">KYC / Verify</a></div>
+        <div>Create an account via <a href="#" onclick="goDash('kyc')" style="color:var(--cg);font-weight:600;">Create Account</a></div>
       </div>
       <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.5rem;">
         <div style="width:22px;height:22px;border-radius:50%;background:#0a0a0a;color:#fff;font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
@@ -1674,7 +1698,8 @@ async function populateFundingAccountDropdown(){
     const list = Array.isArray(accounts) ? accounts : accounts.accounts || [];
     const opts = '<option value="">— Select account —</option>'
       + list.map(a => {
-          const label = (a.account_number || a.id.substring(0,8)) + (a.identity ? ' — '+(a.identity.given_name||'')+' '+(a.identity.family_name||'') : '');
+          const accName = a.identity ? ((a.identity.given_name||'')+' '+(a.identity.family_name||'')).trim() : '';
+          const label = accName ? accName + (a.account_number ? ' ('+a.account_number+')' : '') : (a.account_number || a.id.substring(0,12));
           const selected = a.id === CREDS.accountId ? 'selected' : '';
           return '<option value="'+a.id+'" '+selected+'>'+label+'</option>';
         }).join('');
@@ -1876,7 +1901,7 @@ function updateConnStatusBadge(ok){
 function pageKYC(){
   return`
 <div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
-  <div><h1 class="pt">KYC / Create Account</h1><p class="ps">Create a new brokerage account via Broker API <code style="color:var(--cg);">POST /v1/accounts</code></p></div>
+  <div><h1 class="pt">Create Account</h1><p class="ps">Create a new Alpaca brokerage account via <code style="color:var(--cg);">POST /v1/accounts</code></p></div>
   <span style="font-size:0.72rem;color:#aaa;padding-top:0.35rem;">Account creation follows Alpaca Broker onboarding flow</span>
 </div>
 
@@ -2125,6 +2150,38 @@ function buildKYCPayload(){
 
 // Auto-format phone: add + prefix if missing
 
+
+
+function validateBankAcct(input){
+  const v = input.value.replace(/\D/g,'');
+  input.value = v;
+  if(v.length > 0 && (v.length < 5 || v.length > 17)){
+    input.style.borderColor = '#FF3B30';
+  } else {
+    input.style.borderColor = '';
+  }
+}
+
+// ABA routing number checksum (mod-10 weighted)
+function validateRouting(input){
+  const v = input.value.replace(/\D/g,'');
+  input.value = v;
+  const hint = document.getElementById('kBankRouteHint');
+  if(v.length === 0){ input.style.borderColor=''; return; }
+  if(v.length !== 9){
+    input.style.borderColor = v.length < 9 ? '' : '#FF3B30';
+    if(hint && v.length > 9) hint.style.color='#FF3B30';
+    return;
+  }
+  // ABA checksum: 3*d1 + 7*d2 + d3 + 3*d4 + 7*d5 + d6 + 3*d7 + 7*d8 + d9 must be divisible by 10
+  const d = v.split('').map(Number);
+  const sum = 3*(d[0]+d[3]+d[6]) + 7*(d[1]+d[4]+d[7]) + (d[2]+d[5]+d[8]);
+  const valid = sum % 10 === 0;
+  input.style.borderColor = valid ? 'var(--cg)' : '#FF3B30';
+  if(hint) hint.style.color = valid ? '#00a050' : '#FF3B30';
+  if(hint && valid) hint.innerHTML = hint.innerHTML.replace(/^<.*?>/,'')
+    || '<span style="color:#00a050;font-weight:600;">✓ Valid ABA routing number</span>';
+}
 
 function validatePhone(input){
   const v = input.value.trim();
