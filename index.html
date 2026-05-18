@@ -366,6 +366,7 @@ tr:hover td{background:#fafaf8;}
 .news-pill:hover,.news-pill.active{background:#0a0a0a;color:#fff;border-color:#0a0a0a;}
 .news-card:hover{border-color:#0a0a0a !important;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
 @keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 </style>
 </head>
 <body>
@@ -1897,6 +1898,221 @@ async function submitACHTransfer(){
 }
 
 // ─── Broker API: Load Accounts ────────────────────────────────
+
+async function loadSelectedAccountDetail(acctId){
+  const el = document.getElementById('selectedAccountDetail');
+  if(!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '<div class="card" style="margin-top:1rem;"><div style="text-align:center;padding:1rem;color:#aaa;">⏳ Loading account details…</div></div>';
+
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall){ el.style.display='none'; return; }
+
+  try{
+    // Fetch account + ACH relationships in parallel
+    const [acctRes, achRes] = await Promise.all([
+      fetch(brokerURL('/v1/accounts/'+acctId), { headers: brokerHeaders() }),
+      fetch(brokerURL('/v1/accounts/'+acctId+'/ach_relationships'), { headers: brokerHeaders() }),
+    ]);
+
+    const a    = acctRes.ok ? await acctRes.json() : {};
+    const achs = achRes.ok  ? await achRes.json()  : [];
+    const achList = Array.isArray(achs) ? achs : [];
+
+    const id   = a.id || acctId;
+    const name = a.identity ? ((a.identity.given_name||'')+' '+(a.identity.family_name||'')).trim() : (_accountCache[acctId]?.name||'');
+    const num  = a.account_number || '';
+    const email= a.contact?.email_address || '';
+    const phone= a.contact?.phone_number || '';
+    const city = a.contact?.city || '';
+    const state= a.contact?.state || '';
+    const currency = a.currency || 'USD';
+    const status   = a.status || '—';
+    const created  = a.created_at ? new Date(a.created_at).toLocaleDateString('en-AU',{year:'numeric',month:'short',day:'numeric'}) : '—';
+
+    // Update cache with fresh data
+    if(name) _accountCache[acctId] = { ...(_accountCache[acctId]||{}), name, account_number: num };
+
+    el.innerHTML = '<div class="card" style="margin-top:1rem;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">'+
+        '<div>'+
+          '<div style="font-family:var(--f2);font-size:1.25rem;font-weight:900;color:#0a0a0a;">'+(name||'Account Details')+'</div>'+
+          '<div style="font-size:0.78rem;color:#888;font-family:monospace;margin-top:0.2rem;">'+num+(num?' · ':'')+'<span style="font-family:sans-serif;font-size:0.72rem;">'+id+'</span></div>'+
+        '</div>'+
+        '<span class="tag '+(status==='ACTIVE'?'t-green':status==='SUBMITTED'?'t-gold':'t-grey')+'">'+status+'</span>'+
+      '</div>'+
+
+      '<div class="g2" style="gap:1rem;margin-bottom:1rem;">'+
+        '<div style="font-size:0.82rem;line-height:2;color:#555;">'+
+          '<div style="font-size:0.68rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">Contact</div>'+
+          (email?'<div>📧 '+email+'</div>':'')+
+          (phone?'<div>📱 '+phone+'</div>':'')+
+          (city?'<div>📍 '+city+(state?', '+state:'')+'</div>':'')+
+          '<div>💱 '+currency+'</div>'+
+          '<div>📅 Created '+created+'</div>'+
+        '</div>'+
+        '<div style="font-size:0.82rem;line-height:2;color:#555;">'+
+          '<div style="font-size:0.68rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;">Identity</div>'+
+          (a.identity?.date_of_birth?'<div>🎂 DOB: '+a.identity.date_of_birth+'</div>':'')+
+          (a.identity?.country_of_citizenship?'<div>🌍 Citizenship: '+a.identity.country_of_citizenship+'</div>':'')+
+          (a.identity?.tax_id_type?'<div>🪪 Tax ID: '+a.identity.tax_id_type+'</div>':'')+
+          (a.identity?.investment_objective?'<div>🎯 Objective: '+a.identity.investment_objective+'</div>':'')+
+          (a.identity?.risk_tolerance?'<div>⚖️ Risk: '+a.identity.risk_tolerance+'</div>':'')+
+        '</div>'+
+      '</div>'+
+
+      // ACH Relationships
+      '<div style="border-top:1px solid #f0f0ee;padding-top:1rem;margin-top:0.5rem;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.65rem;">'+
+          '<div style="font-size:0.82rem;font-weight:700;color:#555;">🏦 Linked Bank Accounts (ACH)</div>'+
+          '<button class="btn btn-outline btn-sm" onclick="goDash(&quot;funding&quot;)">+ Link Bank</button>'+
+        '</div>'+
+        (achList.length===0
+          ? '<div style="font-size:0.82rem;color:#aaa;padding:0.5rem 0;">No bank accounts linked yet. <a href="#" onclick="goDash(&quot;funding&quot;)" style="color:var(--cg);">Link one →</a></div>'
+          : achList.map(ach=>'<div style="background:#f7f7f5;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;">'+
+              '<div>'+
+                '<div style="font-weight:600;font-size:0.88rem;color:#0a0a0a;">'+(ach.nickname||'Bank Account')+'</div>'+
+                '<div style="font-size:0.72rem;color:#888;margin-top:0.15rem;">'+(ach.bank_account_type||'')+(ach.bank_account_number?' · ****'+ach.bank_account_number.slice(-4):'')+'</div>'+
+                '<div style="font-size:0.68rem;color:#aaa;font-family:monospace;margin-top:0.1rem;">ID: '+ach.id+'</div>'+
+              '</div>'+
+              '<div style="display:flex;align-items:center;gap:0.5rem;">'+
+                '<span class="tag '+(ach.status==='APPROVED'?'t-green':ach.status==='QUEUED'||ach.status==='PENDING'?'t-gold':'t-grey')+'">'+( ach.status||'—')+'</span>'+
+                '<button class="btn btn-lime btn-sm" onclick="document.getElementById(&quot;achRelId&quot;).value=&quot;'+ach.id+'&quot;;goDash(&quot;funding&quot;)">Fund</button>'+
+              '</div>'+
+            '</div>').join('')
+        )+
+      '</div>'+
+    '</div>';
+
+    // Also refresh the badge with full name
+    updateActiveAccountBadge();
+
+  } catch(e){
+    el.innerHTML='<div class="card" style="margin-top:1rem;font-size:0.82rem;color:#FF3B30;">❌ Could not load account details: '+e.message+'</div>';
+  }
+}
+
+
+// ─── Allocation donut chart ───────────────────────────────────
+const ALLOC_COLORS = ['#00D64F','#0a0a0a','#FF3B30','#007AFF','#FFD60A','#BF5AF2','#FF9500','#34C759'];
+
+function drawAllocChart(liveData){
+  const canvas = document.getElementById('allocChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect2 = canvas.getBoundingClientRect();
+  if(rect2.width > 0){ canvas.width = rect2.width; canvas.height = rect2.height; }
+
+  const data = liveData && liveData.length > 0
+    ? liveData.map((p,i) => ({
+        label: p.symbol,
+        value: parseFloat(p.market_value||0),
+        color: ALLOC_COLORS[i % ALLOC_COLORS.length]
+      }))
+    : [
+        {label:'NVDA',value:4376,color:ALLOC_COLORS[0]},
+        {label:'BTC', value:3371,color:ALLOC_COLORS[1]},
+        {label:'TSLA',value:1976,color:ALLOC_COLORS[2]},
+        {label:'AAPL',value:1934,color:ALLOC_COLORS[3]},
+        {label:'MSFT',value:1246,color:ALLOC_COLORS[4]},
+      ];
+
+  const total = data.reduce((s,d) => s+d.value, 0);
+  if(total <= 0){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='#e5e5e0'; ctx.lineWidth=12; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.font='500 11px Inter,sans-serif';
+    ctx.fillStyle='#aaa'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('No positions', cx, cy);
+    const legend = document.getElementById('allocLegend');
+    if(legend) legend.innerHTML = '<span style="font-size:0.78rem;color:#aaa;">No open positions yet</span>';
+    return;
+  }
+
+  let start = -Math.PI/2;
+  const cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-6;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  data.forEach(d => {
+    const angle = (d.value/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    ctx.strokeStyle='#f7f7f5'; ctx.lineWidth=3; ctx.stroke();
+    start += angle;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.52,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+
+  const legend = document.getElementById('allocLegend');
+  if(legend) legend.innerHTML = data.map(d =>
+    '<span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:#333;">'
+    +'<span style="width:10px;height:10px;border-radius:3px;background:'+d.color+';flex-shrink:0;display:inline-block;"></span>'
+    +'<strong>'+d.label+'</strong> '+((d.value/total)*100).toFixed(0)+'%</span>'
+  ).join('');
+}
+
+// ─── Portfolio history line chart ─────────────────────────────
+function drawPortfolioChart(period){
+  const canvas = document.getElementById('portChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  || canvas.offsetWidth  || 400;
+  canvas.height = rect.height || canvas.offsetHeight || 200;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Mock data points — will be replaced with real portfolio history API
+  const datasets = {
+    '1W': [100,102,98,105,103,108,112],
+    '1M': [90,88,92,95,100,98,103,107,105,110,108,112],
+    '3M': [80,82,79,85,88,84,90,95,92,98,100,103,101,108,112],
+    '1Y': [60,65,62,70,68,75,80,78,85,88,84,90,95,92,98,100,105,103,108,112],
+  };
+  const pts = datasets[period] || datasets['1W'];
+  const min = Math.min(...pts)*0.98;
+  const max = Math.max(...pts)*1.02;
+  const pad = { t:20, r:20, b:30, l:10 };
+  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+  const x = (i) => pad.l + (i/(pts.length-1))*cw;
+  const y = (v) => pad.t + (1-(v-min)/(max-min))*ch;
+
+  // Fill gradient
+  const grad = ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0,'rgba(0,214,79,0.18)');
+  grad.addColorStop(1,'rgba(0,214,79,0.0)');
+  ctx.beginPath();
+  ctx.moveTo(x(0),y(pts[0]));
+  pts.forEach((v,i)=>{ if(i>0) ctx.lineTo(x(i),y(v)); });
+  ctx.lineTo(x(pts.length-1),H-pad.b);
+  ctx.lineTo(x(0),H-pad.b);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(x(0),y(pts[0]));
+  pts.forEach((v,i)=>{ if(i>0) ctx.lineTo(x(i),y(v)); });
+  ctx.strokeStyle = '#00D64F';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // End dot
+  ctx.beginPath();
+  ctx.arc(x(pts.length-1), y(pts[pts.length-1]), 5, 0, Math.PI*2);
+  ctx.fillStyle = '#00D64F';
+  ctx.fill();
+}
+
 async function loadBrokerAccounts(){
   const panel=document.getElementById('accountsPanel');
   const badge=document.getElementById('accountsCountBadge');
@@ -1936,14 +2152,14 @@ async function loadBrokerAccounts(){
 
 function selectAccount(id,label){
   saveKey('accountId',id);
-  const el=document.getElementById('activeAccountInput');
-  if(el) el.value=id;
-  // Show name in toast if we have it cached
+  const inputEl=document.getElementById('activeAccountInput');
+  if(inputEl) inputEl.value=id;
   const cachedName = _accountCache[id]?.name || label;
   showToast('Active: '+cachedName,'green');
   updateActiveAccountBadge();
-  loadBrokerAccounts(); // refresh to show active highlight
   updateNavLockState();
+  // Refresh list highlight + show detail
+  loadBrokerAccounts();
 }
 
 function updateActiveAccountBadge(){
