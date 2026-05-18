@@ -1762,11 +1762,11 @@ function pageKYC(){
   <div class="card" id="kycStep1">
     <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.1rem;">📬 Contact Information</h3>
     <div class="form-g"><label class="f-lbl">Email Address</label><input class="f-in" id="kEmail" type="email" placeholder="test@gmail.com"></div>
-    <div class="form-g"><label class="f-lbl">Phone Number</label><input class="f-in" id="kPhone" placeholder="7065912538"></div>
+    <div class="form-g"><label class="f-lbl">Phone Number <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(international format)</span></label><input class="f-in" id="kPhone" placeholder="+61400123123" oninput="autoFormatPhone(this)"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Must include country code, e.g. +61 for Australia, +1 for USA</div></div>
     <div class="form-g"><label class="f-lbl">Street Address</label><input class="f-in" id="kStreet" placeholder="123 Main St"></div>
     <div class="g2" style="gap:0.75rem;">
       <div class="form-g"><label class="f-lbl">City</label><input class="f-in" id="kCity" placeholder="San Mateo"></div>
-      <div class="form-g"><label class="f-lbl">State</label><input class="f-in" id="kState" placeholder="CA" maxlength="2"></div>
+      <div class="form-g"><label class="f-lbl">State / Province</label><input class="f-in" id="kState" placeholder="VIC" maxlength="50"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Use abbreviation where possible (VIC, NSW, CA, NY)</div></div>
     </div>
     <div class="form-g"><label class="f-lbl">Postal Code</label><input class="f-in" id="kPostal" placeholder="33345"></div>
   </div>
@@ -1791,12 +1791,20 @@ function pageKYC(){
       <div class="form-g"><label class="f-lbl">Tax ID</label><input class="f-in" id="kTaxId" placeholder="661-010-666"></div>
     </div>
     <div class="g2" style="gap:0.75rem;">
-      <div class="form-g"><label class="f-lbl">Country of Citizenship</label><input class="f-in" id="kCitizenship" placeholder="USA" maxlength="3"></div>
-      <div class="form-g"><label class="f-lbl">Country of Tax Residence</label><input class="f-in" id="kTaxCountry" placeholder="USA" maxlength="3"></div>
+      <div class="form-g"><label class="f-lbl">Country of Citizenship <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(ISO 3-letter)</span></label><input class="f-in" id="kCitizenship" placeholder="AUS" maxlength="3" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">3-letter code: AUS · USA · GBR · CAN · NZL</div></div>
+      <div class="form-g"><label class="f-lbl">Country of Tax Residence <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(ISO 3-letter)</span></label><input class="f-in" id="kTaxCountry" placeholder="AUS" maxlength="3" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Must be ISO 3166-1 alpha-3, not currency code (AUS not AUD)</div></div>
     </div>
     <div class="g2" style="gap:0.75rem;">
       <div class="form-g"><label class="f-lbl">Annual Income Min ($)</label><input class="f-in" id="kIncMin" type="number" placeholder="10000"></div>
       <div class="form-g"><label class="f-lbl">Annual Income Max ($)</label><input class="f-in" id="kIncMax" type="number" placeholder="50000"></div>
+    </div>
+    <div class="g2" style="gap:0.75rem;">
+      <div class="form-g"><label class="f-lbl">Total Net Worth Min ($)</label><input class="f-in" id="kNWMin" type="number" placeholder="10000"></div>
+      <div class="form-g"><label class="f-lbl">Total Net Worth Max ($)</label><input class="f-in" id="kNWMax" type="number" placeholder="100000"></div>
+    </div>
+    <div class="g2" style="gap:0.75rem;">
+      <div class="form-g"><label class="f-lbl">Liquid Net Worth Min ($)</label><input class="f-in" id="kLNWMin" type="number" placeholder="5000"></div>
+      <div class="form-g"><label class="f-lbl">Liquid Net Worth Max ($)</label><input class="f-in" id="kLNWMax" type="number" placeholder="50000"></div>
     </div>
     <div class="form-g"><label class="f-lbl">Investment Objective</label>
       <select class="f-in" id="kInvObj">
@@ -1843,7 +1851,7 @@ function pageKYC(){
     <div style="margin-top:1rem;">
       <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;font-size:0.82rem;color:#555;line-height:1.6;">
         <input type="checkbox" id="kAgreements" style="width:16px;height:16px;accent-color:var(--cg);flex-shrink:0;margin-top:2px;">
-        I agree to the Customer Agreement, Options Agreement, and Margin Agreement. I confirm all information provided is accurate.
+        I agree to the Customer Agreement and Margin Agreement. I confirm all information provided is accurate.
       </label>
     </div>
   </div>
@@ -1903,45 +1911,67 @@ function pageKYC(){
 
 // Build KYC payload from form
 function buildKYCPayload(){
-  const now=new Date().toISOString();
-  const ip='185.11.11.11'; // placeholder
+  const now = new Date().toISOString();
+  const ip  = '185.11.11.11'; // placeholder — Alpaca requires a valid IP
+
+  // Helpers
+  const val  = id => (document.getElementById(id)?.value||'').trim();
+  const iso3 = id => val(id).toUpperCase().slice(0,3); // enforce 3-letter ISO country code
+  const num  = id => val(id) || '10000';
+
+  // Phone: ensure it starts with +
+  let phone = val('kPhone');
+  if(phone && !phone.startsWith('+')) phone = '+' + phone;
+
   return {
     contact:{
-      email_address:document.getElementById('kEmail')?.value||'',
-      phone_number:document.getElementById('kPhone')?.value||'',
-      street_address:[document.getElementById('kStreet')?.value||''],
-      city:document.getElementById('kCity')?.value||'',
-      state:document.getElementById('kState')?.value||'',
-      postal_code:document.getElementById('kPostal')?.value||'',
+      email_address: val('kEmail'),
+      phone_number:  phone,
+      street_address:[val('kStreet')],
+      city:          val('kCity'),
+      state:         val('kState'),
+      postal_code:   val('kPostal'),
     },
     identity:{
-      given_name:document.getElementById('kFirst')?.value||'',
-      family_name:document.getElementById('kLast')?.value||'',
-      date_of_birth:document.getElementById('kDOB')?.value||'',
-      tax_id_type:document.getElementById('kTaxType')?.value||'USA_SSN',
-      tax_id:document.getElementById('kTaxId')?.value||'',
-      country_of_citizenship:document.getElementById('kCitizenship')?.value||'USA',
-      country_of_birth:document.getElementById('kCitizenship')?.value||'USA',
-      country_of_tax_residence:document.getElementById('kTaxCountry')?.value||'USA',
-      funding_source:[document.getElementById('kFunding')?.value||'employment_income'],
-      annual_income_min:document.getElementById('kIncMin')?.value||'10000',
-      annual_income_max:document.getElementById('kIncMax')?.value||'50000',
-      investment_objective:document.getElementById('kInvObj')?.value||'growth',
-      risk_tolerance:document.getElementById('kRisk')?.value||'moderate',
+      given_name:               val('kFirst'),
+      family_name:              val('kLast'),
+      date_of_birth:            val('kDOB'),
+      tax_id_type:              val('kTaxType') || 'AUS_TFN',
+      tax_id:                   val('kTaxId'),
+      // All country fields must be ISO 3166-1 alpha-3 (3 letters, NOT currency codes)
+      country_of_citizenship:   iso3('kCitizenship') || 'AUS',
+      country_of_birth:         iso3('kCitizenship') || 'AUS', // defaults to same as citizenship
+      country_of_tax_residence: iso3('kTaxCountry')  || 'AUS',
+      funding_source:[val('kFunding') || 'employment_income'],
+      annual_income_min:   num('kIncMin'),
+      annual_income_max:   num('kIncMax'),
+      total_net_worth_min: num('kNWMin'),
+      total_net_worth_max: num('kNWMax'),
+      liquid_net_worth_min:num('kLNWMin'),
+      liquid_net_worth_max:num('kLNWMax'),
+      investment_objective:val('kInvObj') || 'growth',
+      risk_tolerance:      val('kRisk')   || 'moderate',
       investment_time_horizon:'more_than_10_years',
     },
     disclosures:{
-      is_control_person:document.getElementById('kControl')?.value==='true',
+      is_control_person:             document.getElementById('kControl')?.value==='true',
       is_affiliated_exchange_or_finra:document.getElementById('kFinra')?.value==='true',
       is_affiliated_exchange_or_iiroc:document.getElementById('kIiroc')?.value==='true',
-      is_politically_exposed:document.getElementById('kPEP')?.value==='true',
-      immediate_family_exposed:document.getElementById('kFamily')?.value==='true',
+      is_politically_exposed:        document.getElementById('kPEP')?.value==='true',
+      immediate_family_exposed:      document.getElementById('kFamily')?.value==='true',
     },
     agreements:[
       {agreement:'customer_agreement',signed_at:now,ip_address:ip},
-      {agreement:'margin_agreement',signed_at:now,ip_address:ip},
+      {agreement:'margin_agreement',  signed_at:now,ip_address:ip},
     ],
   };
+}
+
+// Auto-format phone: add + prefix if missing
+function autoFormatPhone(input){
+  let v = input.value.replace(/[^\d+]/g,''); // strip non-digits except +
+  if(v && !v.startsWith('+')) v = '+' + v;
+  input.value = v;
 }
 
 function updateKYCPreview(){
