@@ -670,6 +670,49 @@ tr:hover td{background:#fafaf8;}
 const CREDS = { key: '', secret: '', env: 'paper', proxyUrl: '', accountId: '' };
 let ACTIVE_ACCOUNT = null; // Full account object once selected
 
+// ─── Account name cache ───────────────────────────────────────
+const _accountCache = {}; // id → { name, account_number, status }
+
+function getAccountLabel(a) {
+  // Given an account object, return "First Last (ACCT#)" or fallback
+  const name = a.identity
+    ? ((a.identity.given_name||'') + ' ' + (a.identity.family_name||'')).trim()
+    : (_accountCache[a.id]?.name || '');
+  const num  = a.account_number || _accountCache[a.id]?.account_number || '';
+  if(name && num)  return name + ' (' + num + ')';
+  if(name)         return name;
+  if(num)          return num;
+  return a.id.substring(0,12) + '…';
+}
+
+async function enrichAccountDetails(list) {
+  // Fetch individual account details for any that are missing identity
+  // Use Promise.all but cap at 10 concurrent requests
+  const missing = list.filter(a => !a.identity && !_accountCache[a.id]);
+  const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
+  if(!canCall || missing.length === 0) return;
+  await Promise.all(missing.slice(0, 10).map(async a => {
+    try {
+      const res = await fetch(brokerURL('/v1/accounts/' + a.id), { headers: brokerHeaders() });
+      if(res.ok) {
+        const d = await res.json();
+        const name = d.identity
+          ? ((d.identity.given_name||'') + ' ' + (d.identity.family_name||'')).trim()
+          : '';
+        _accountCache[a.id] = { name, account_number: d.account_number || a.account_number, status: d.status };
+        // Merge identity back onto original object for consistency
+        if(d.identity) a.identity = d.identity;
+      }
+    } catch(e) { /* ignore individual fetch errors */ }
+  }));
+}
+
+function accountOptHTML(a, selectedId) {
+  const label = getAccountLabel(a);
+  const sel = a.id === selectedId ? 'selected' : '';
+  return '<option value="' + a.id + '" ' + sel + '>' + label + '</option>';
+}
+
 function saveKey(field, val) {
   if (field === 'key') CREDS.key = val;
   if (field === 'secret') CREDS.secret = val;
@@ -882,15 +925,21 @@ function setOut(id,txt,err=false){const el=document.getElementById(id);if(el){el
 
 // ─── PORTFOLIO PAGE ───────────────────────────────────────────
 function pagePortfolio(){
-  // Trigger live data fetch after render (50ms delay lets DOM settle)
-  setTimeout(loadLivePortfolio, 120);
-  return `${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
+  setTimeout(()=>{ populateFundingAccountDropdown(); loadLivePortfolio(); }, 120);
+  return `${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;">
   <div>
     <h1 class="pt">My Portfolio</h1>
-    <p class="ps">Financial snapshot via Alpaca Markets API</p>
+    <p class="ps">Financial snapshot via Alpaca Broker API</p>
   </div>
-  <div style="display:flex;align-items:center;gap:0.75rem;">
-    <span id="liveDataBadge"><span style="font-size:0.72rem;color:var(--lmuted);">Connecting…</span></span>
+  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <label style="font-size:0.72rem;color:#888;font-weight:600;white-space:nowrap;">Account:</label>
+      <select id="portfolioAccountSelect" class="f-in" style="font-size:0.8rem;padding:0.4rem 0.75rem;min-width:200px;max-width:300px;"
+        onchange="saveKey('accountId',this.value);updateActiveAccountBadge();loadLivePortfolio()">
+        <option value="">— Select account —</option>
+      </select>
+    </div>
+    <span id="liveDataBadge"><span style="font-size:0.72rem;color:#aaa;">Connecting…</span></span>
     <button class="btn btn-outline btn-sm" onclick="loadLivePortfolio()" title="Refresh live data">↻ Refresh</button>
   </div>
 </div>
@@ -1028,11 +1077,19 @@ function pageResearch(){
 
 // ─── ORDERS PAGE ─────────────────────────────────────────────
 function pageOrders(){
-  // Load live orders after render
-  setTimeout(loadLiveOrders, 150);
-  return`${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;">
-  <div><h1 class="pt">Orders</h1><p class="ps">Place & manage orders via Alpaca <code style="color:var(--cg);">/v2/orders</code></p></div>
-  <span id="ordersLiveBadge" style="font-size:0.72rem;color:#aaa;">Loading…</span>
+  setTimeout(()=>{ populateFundingAccountDropdown(); loadLiveOrders(); document.getElementById('limitPriceG').style.display='none'; }, 150);
+  return`${apiStatusBanner()}<div class="ph" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;">
+  <div><h1 class="pt">Orders</h1><p class="ps">Place & manage orders via Broker API</p></div>
+  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <label style="font-size:0.72rem;color:#888;font-weight:600;white-space:nowrap;">Account:</label>
+      <select id="ordersAccountSelect" class="f-in" style="font-size:0.8rem;padding:0.4rem 0.75rem;min-width:200px;max-width:300px;"
+        onchange="saveKey('accountId',this.value);updateActiveAccountBadge();loadLiveOrders()">
+        <option value="">— Select account —</option>
+      </select>
+    </div>
+    <span id="ordersLiveBadge" style="font-size:0.72rem;color:#aaa;">Loading…</span>
+  </div>
 </div>
 <div class="g2" style="gap:1.5rem;margin-bottom:2rem;">
 <div class="card">
@@ -1681,8 +1738,22 @@ function pageFunding(){
 }
 
 // Populate account dropdowns on funding page
+
+function refreshAllAccountDropdowns(list) {
+  // Update any account select dropdowns currently on the page
+  const ids = ['achAccountSelect','transferAccountSelect','portfolioAccountSelect','ordersAccountSelect'];
+  ids.forEach(selectId => {
+    const el = document.getElementById(selectId);
+    if(!el) return;
+    const cur = el.value || CREDS.accountId;
+    el.innerHTML = '<option value="">— Select account —</option>'
+      + list.map(a => accountOptHTML(a, cur)).join('');
+    if(cur) el.value = cur;
+  });
+}
+
 async function populateFundingAccountDropdown(){
-  const selectors = ['achAccountSelect','transferAccountSelect'];
+  const selectors = ['achAccountSelect','transferAccountSelect','portfolioAccountSelect','ordersAccountSelect'];
   const canCall = CREDS.proxyUrl || (CREDS.key && CREDS.secret);
   if(!canCall){
     selectors.forEach(id => {
@@ -1696,21 +1767,12 @@ async function populateFundingAccountDropdown(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const accounts = await res.json();
     const list = Array.isArray(accounts) ? accounts : accounts.accounts || [];
-    const opts = '<option value="">— Select account —</option>'
-      + list.map(a => {
-          const accName = a.identity ? ((a.identity.given_name||'')+' '+(a.identity.family_name||'')).trim() : '';
-          const label = accName ? accName + (a.account_number ? ' ('+a.account_number+')' : '') : (a.account_number || a.id.substring(0,12));
-          const selected = a.id === CREDS.accountId ? 'selected' : '';
-          return '<option value="'+a.id+'" '+selected+'>'+label+'</option>';
-        }).join('');
-    selectors.forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.innerHTML = opts;
-    });
+    await enrichAccountDetails(list);
+    refreshAllAccountDropdowns(list);
   } catch(e){
     selectors.forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.innerHTML = '<option value="">Error loading: '+e.message+'</option>';
+      if(el) el.innerHTML = '<option value="">Error: '+e.message+'</option>';
     });
   }
 }
@@ -2361,8 +2423,9 @@ async function loadLivePortfolio(){
           drawAllocChart(null);
         }
       }
+      const acctLabel = _accountCache[acctId]?.name || acctId.substring(0,8)+'…';
       const badge=document.getElementById('liveDataBadge');
-      if(badge) badge.innerHTML='<span style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,160,80,0.08);border:1px solid rgba(0,160,80,0.2);border-radius:20px;padding:0.2rem 0.75rem;font-size:0.72rem;color:#00a050;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:#00a050;display:inline-block;"></span>Live data · '+now+'</span>';
+      if(badge) badge.innerHTML='<span style="display:inline-flex;align-items:center;gap:0.4rem;background:rgba(0,160,80,0.08);border:1px solid rgba(0,160,80,0.2);border-radius:20px;padding:0.2rem 0.75rem;font-size:0.72rem;color:#00a050;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:#00a050;display:inline-block;"></span>'+acctLabel+' · '+now+'</span>';
     }
   } catch(err){
     console.warn('loadLivePortfolio error:',err.message);
