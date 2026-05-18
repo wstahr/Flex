@@ -1762,7 +1762,7 @@ function pageKYC(){
   <div class="card" id="kycStep1">
     <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.1rem;">📬 Contact Information</h3>
     <div class="form-g"><label class="f-lbl">Email Address</label><input class="f-in" id="kEmail" type="email" placeholder="test@gmail.com"></div>
-    <div class="form-g"><label class="f-lbl">Phone Number <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(international format)</span></label><input class="f-in" id="kPhone" placeholder="+61400123123" oninput="autoFormatPhone(this)"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Must include country code, e.g. +61 for Australia, +1 for USA</div></div>
+    <div class="form-g"><label class="f-lbl">Phone Number <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(international format)</span></label><input class="f-in" id="kPhone" placeholder="+61400123123" oninput="autoFormatPhone(this)" onblur="validatePhone(this)"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Must include country code, e.g. +61 for Australia, +1 for USA</div></div>
     <div class="form-g"><label class="f-lbl">Street Address</label><input class="f-in" id="kStreet" placeholder="123 Main St"></div>
     <div class="g2" style="gap:0.75rem;">
       <div class="form-g"><label class="f-lbl">City</label><input class="f-in" id="kCity" placeholder="San Mateo"></div>
@@ -1791,8 +1791,49 @@ function pageKYC(){
       <div class="form-g"><label class="f-lbl">Tax ID</label><input class="f-in" id="kTaxId" placeholder="661-010-666"></div>
     </div>
     <div class="g2" style="gap:0.75rem;">
-      <div class="form-g"><label class="f-lbl">Country of Citizenship <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(ISO 3-letter)</span></label><input class="f-in" id="kCitizenship" placeholder="AUS" maxlength="3" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">3-letter code: AUS · USA · GBR · CAN · NZL</div></div>
-      <div class="form-g"><label class="f-lbl">Country of Tax Residence <span style="color:#aaa;font-weight:400;font-size:0.78rem;">(ISO 3-letter)</span></label><input class="f-in" id="kTaxCountry" placeholder="AUS" maxlength="3" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"><div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">Must be ISO 3166-1 alpha-3, not currency code (AUS not AUD)</div></div>
+      <div class="form-g">
+        <label class="f-lbl">Country of Citizenship</label>
+        <select class="f-in" id="kCitizenship" onchange="syncCountryFields()">
+          <option value="AUS">Australia (AUS)</option>
+          <option value="USA">United States (USA)</option>
+          <option value="GBR">United Kingdom (GBR)</option>
+          <option value="CAN">Canada (CAN)</option>
+          <option value="NZL">New Zealand (NZL)</option>
+          <option value="SGP">Singapore (SGP)</option>
+          <option value="HKG">Hong Kong (HKG)</option>
+          <option value="JPN">Japan (JPN)</option>
+          <option value="DEU">Germany (DEU)</option>
+          <option value="FRA">France (FRA)</option>
+          <option value="IND">India (IND)</option>
+          <option value="ZAF">South Africa (ZAF)</option>
+          <option value="OTHER">Other (enter below)</option>
+        </select>
+        <input class="f-in" id="kCitizenshipOther" placeholder="3-letter ISO code e.g. BRA" maxlength="3"
+          style="display:none;margin-top:0.4rem;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-g">
+        <label class="f-lbl">Country of Tax Residence</label>
+        <select class="f-in" id="kTaxCountry">
+          <option value="AUS">Australia (AUS)</option>
+          <option value="USA">United States (USA)</option>
+          <option value="GBR">United Kingdom (GBR)</option>
+          <option value="CAN">Canada (CAN)</option>
+          <option value="NZL">New Zealand (NZL)</option>
+          <option value="SGP">Singapore (SGP)</option>
+          <option value="HKG">Hong Kong (HKG)</option>
+          <option value="JPN">Japan (JPN)</option>
+          <option value="DEU">Germany (DEU)</option>
+          <option value="FRA">France (FRA)</option>
+          <option value="IND">India (IND)</option>
+          <option value="ZAF">South Africa (ZAF)</option>
+          <option value="OTHER">Other (enter below)</option>
+        </select>
+        <input class="f-in" id="kTaxCountryOther" placeholder="3-letter ISO code e.g. BRA" maxlength="3"
+          style="display:none;margin-top:0.4rem;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <div style="font-size:0.72rem;color:#aaa;margin-top:0.3rem;">ISO 3166-1 alpha-3 country code — not the currency code (AUS not AUD)</div>
+      </div>
     </div>
     <div class="g2" style="gap:0.75rem;">
       <div class="form-g"><label class="f-lbl">Annual Income Min ($)</label><input class="f-in" id="kIncMin" type="number" placeholder="10000"></div>
@@ -1916,7 +1957,12 @@ function buildKYCPayload(){
 
   // Helpers
   const val  = id => (document.getElementById(id)?.value||'').trim();
-  const iso3 = id => val(id).toUpperCase().slice(0,3); // enforce 3-letter ISO country code
+  // For select-based country fields: if value is "OTHER" use the companion text input
+  const iso3 = id => {
+    const v = val(id).toUpperCase();
+    if(v === 'OTHER') return val(id+'Other').toUpperCase().slice(0,3);
+    return v.slice(0,3);
+  };
   const num  = id => val(id) || '10000';
 
   // Phone: ensure it starts with +
@@ -1968,6 +2014,37 @@ function buildKYCPayload(){
 }
 
 // Auto-format phone: add + prefix if missing
+
+
+function validatePhone(input){
+  const v = input.value.trim();
+  const hint = input.nextElementSibling;
+  if(v && !v.match(/^\+[1-9]\d{6,14}$/)){
+    input.style.borderColor = '#FF3B30';
+    if(hint) hint.innerHTML = '⚠️ Format: +[country code][number] — e.g. +61400123123 for Australia, +12125551234 for USA';
+    if(hint) hint.style.color = '#FF3B30';
+  } else {
+    input.style.borderColor = '';
+    if(hint) hint.innerHTML = 'Must include country code, e.g. +61 for Australia, +1 for USA';
+    if(hint) hint.style.color = '#aaa';
+  }
+}
+
+function syncCountryFields(){
+  // Show/hide "Other" text input for citizenship
+  const cit = document.getElementById('kCitizenship');
+  const citOther = document.getElementById('kCitizenshipOther');
+  if(cit && citOther) citOther.style.display = cit.value==='OTHER' ? 'block' : 'none';
+
+  // Show/hide "Other" text input for tax residence
+  const tax = document.getElementById('kTaxCountry');
+  const taxOther = document.getElementById('kTaxCountryOther');
+  if(tax && taxOther) taxOther.style.display = tax.value==='OTHER' ? 'block' : 'none';
+
+  // Auto-sync tax residence to match citizenship (user can override)
+  if(cit && tax && tax.value !== 'OTHER') tax.value = cit.value;
+}
+
 function autoFormatPhone(input){
   let v = input.value.replace(/[^\d+]/g,''); // strip non-digits except +
   if(v && !v.startsWith('+')) v = '+' + v;
